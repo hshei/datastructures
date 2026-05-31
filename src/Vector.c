@@ -137,16 +137,16 @@ vector_s *vector_remove(vector_s *vector, size_t index){
     return vector;
 }
 
-void *vector_free(vector_s *vector){
+void vector_free(vector_s *vector){
     if (vector == NULL){
-        return NULL;
+        return;
     }
 
     if (vector->data != NULL){
         free(vector->data);
-        vector->data = NULL;
+        vector->data;
     }
 
     free(vector);
-    return NULL;
+    return;
 }
