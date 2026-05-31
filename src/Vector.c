@@ -25,11 +25,16 @@ vector_s *vector_init(size_t elem_size){
 
 vector_s *vector_push(vector_s *vector, void *element){
     if (vector->size >= vector->capacity){
-        vector->capacity *= 1.5;
-        if ((vector->data = realloc(vector->data, vector->capacity * vector->elem_size)) == NULL){
+        size_t new_capacity = vector->capacity * 1.5;
+        void *tmp = realloc(vector->data, vector->capacity * vector->elem_size);
+
+        if (tmp == NULL){
             fprintf(stderr, "Failed to Reallocate Memory for Vector...");
             return NULL;
         }
+
+        vector->data = tmp;
+        vector->capacity = new_capacity;
     }
     
     char *base = (char *)vector->data;
@@ -73,13 +78,17 @@ vector_s *vector_insert(vector_s *vector, void *element, size_t index){
         return NULL;
     }
 
-    // Grow if needed
     if (vector->size >= vector->capacity){
-        vector->capacity *= 1.5;
-        if ((vector->data = realloc(vector->data, vector->capacity * vector->elem_size)) == NULL){
+        size_t new_capacity = vector->capacity * 1.5;
+        void *tmp = realloc(vector->data, vector->capacity * vector->elem_size);
+
+        if (tmp == NULL){
             fprintf(stderr, "Failed to Reallocate Memory for Vector...");
             return NULL;
         }
+        
+        vector->data = tmp;
+        vector->capacity = new_capacity;
     }
 
     char *base = (char *)vector->data;
