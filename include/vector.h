@@ -23,8 +23,4 @@ void *vector_get(vector_s *vector, size_t index);
 vector_s *vector_remove(vector_s *vector, size_t index);
 void *vector_free(vector_s *vector);
 
-#ifdef __cplusplus
-}
-#endif
-
 #endif // VECTOR_H
