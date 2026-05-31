@@ -1,58 +1,103 @@
-# Data Structures Library
-A small C data structures library, other data structures will be added as time goes.
-- Vector: a dynamic array with multiple functionalities.
+# 🚀 Generic Data Structures Library in C
 
-All the data structures will have a separate test file on the `/test` folder, in which you can run using `./build/desired_test`
+A type-independent data structures library for C. Store **any data type** in the same container—ints, floats, structs, pointers, you name it.
 
+## What's Here?
 
-## Build
+**Vector** — A fully dynamic array that works with any data type. Push, pop, insert, remove, set, get. All the usual stuff.
+
+```c
+// Works with ANY type
+vector_s *vec_ints = vector_init(sizeof(int));
+vector_s *vec_floats = vector_init(sizeof(float));
+vector_s *vec_students = vector_init(sizeof(student_t));
+
+// Same functions for all types
+vector_push(vec_ints, &my_int);
+vector_push(vec_floats, &my_float);
+vector_push(vec_students, &my_student);
+```
+
+More data structures coming as we go.
+
+## Build It
 
 ```sh
-cd '/Users/hassansheikh/Desktop/C/Data Structures'
 make
 ```
 
-This produces:
-- `build/Vector.o`
-- `build/libdatastructures.a`
-- `build/vector_test`
+Creates:
+- `build/libdatastructures.a` — the library
+- `build/vector_test` — test executable
 
-## Run tests
+## Run the Tests
 
 ```sh
 ./build/vector_test
 ```
 
-## Use as a library
+Tests cover **all 7 operations** (push, get, set, insert, remove, pop) on **7 different types**:
+- char, float, double
+- Simple struct, complex struct with nested arrays
+- Void pointers
+- Integers
 
-Compile once and link into your program:
+Everything passes. ✅
+
+## Use It in Your Code
+
+Link against the library:
 
 ```sh
-cc -Wall -Wextra -std=c11 -Iinclude -c src/Vector.c -o build/Vector.o
-ar rcs build/libdatastructures.a build/Vector.o
-cc -Wall -Wextra -std=c11 -Iinclude main.c -Lbuild -ldatastructures -o main
+cc -Wall -Wextra -std=c11 -Iinclude my_program.c -Lbuild -ldatastructures -o my_program
 ```
 
-Use `#include "datastructures.h"` in your own code.
+In your code:
 
-## Publish to GitHub
+```c
+#include "datastructures.h"
 
-1. Initialize a Git repository:
-   ```sh
-git init
-   git add .
-   git commit -m "Initial vector library"
-   ```
-2. Create a GitHub repo and push:
-   ```sh
-gh repo create <username>/vector-lib --public --source=. --remote=origin
-   git push -u origin main
-   ```
+int main() {
+    vector_s *v = vector_init(sizeof(int));
+    
+    int x = 42;
+    vector_push(v, &x);
+    
+    int *result = (int *)vector_get(v, 0);
+    printf("Got: %d\n", *result);
+    
+    vector_free(v);
+    return 0;
+}
+```
 
-If you do not have the GitHub CLI, create the repo in the GitHub web UI and push with:
+## Architecture
+
+```
+src/              — Implementation
+include/          — Public headers
+tests/            — Test files
+build/            — Compiled objects and archives (generated)
+Makefile          — Build automation
+```
+
+Each data structure gets its own `.c` and `.h` pair. New structures are included in `include/datastructures.h` so you only need to `#include "datastructures.h"`.
+
+## Adding More Data Structures
+
+1. Create `src/NewStructure.c` and `include/newstructure.h`
+2. Implement your structure following the vector pattern
+3. Add `#include "newstructure.h"` to `include/datastructures.h`
+4. Update the Makefile to compile your `.c` file
+5. Create `tests/test_newstructure.c`
+
+## Push to GitHub (When Ready)
 
 ```sh
-git remote add origin https://github.com/<username>/<repo>.git
+git init
+git add .
+git commit -m "Type-independent data structures library"
+git remote add origin https://github.com/<hshei>/datastructures.git
 git branch -M main
 git push -u origin main
 ```
