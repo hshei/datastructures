@@ -6,7 +6,7 @@
 
 ds_err_t vector_init(vector_s **vector_out, size_t elem_size){
     vector_s *vector;
-    if ((vector = calloc(1, sizeof(vector_s))) == NULL){  // allocate vector FIRST
+    if ((vector = calloc(1, sizeof(vector_s))) == NULL){  
         fprintf(stderr, "Failed to Allocate Memory for Vector Data...");
         return DS_ERR_ALLOC;
     }
@@ -17,7 +17,7 @@ ds_err_t vector_init(vector_s **vector_out, size_t elem_size){
 
     if ((vector->data = calloc(vector->capacity, vector->elem_size)) == NULL){
         fprintf(stderr, "Failed to Allocate Memory for Vector Data...");
-        free(vector);  // <-- add this
+        free(vector); 
         return DS_ERR_ALLOC;
     }
 
@@ -35,7 +35,7 @@ size_t vector_capacity(const vector_s *vector){
 
 ds_err_t vector_push(vector_s *vector, void *element){
     if (vector->size >= vector->capacity){
-        size_t new_capacity = vector->capacity + (vector->capacity >> 1); /* 1.5x growth */
+        size_t new_capacity = vector->capacity + (vector->capacity / 2); 
         void *tmp = realloc(vector->data, new_capacity * vector->elem_size);
 
         if (tmp == NULL){
@@ -90,7 +90,7 @@ ds_err_t vector_insert(vector_s *vector, void *element, size_t index){
     }
 
     if (vector->size >= vector->capacity){
-        size_t new_capacity = vector->capacity + (vector->capacity >> 1); /* 1.5x growth */
+        size_t new_capacity = vector->capacity + (vector->capacity / 2);
         void *tmp = realloc(vector->data, new_capacity * vector->elem_size);
 
         if (tmp == NULL){
