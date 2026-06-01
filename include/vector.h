@@ -2,6 +2,7 @@
 #define VECTOR_H
 
 #include <stddef.h>
+#include "error.h"
 
 typedef struct vector_s {
     void *data;
@@ -10,13 +11,16 @@ typedef struct vector_s {
     size_t elem_size;
 } vector_s;
 
-vector_s *vector_init(size_t elem_size);
-vector_s *vector_push(vector_s *vector, void *element);
-void *vector_pop(vector_s *vector);
-vector_s *vector_set(vector_s *vector, void *element, size_t index);
-vector_s *vector_insert(vector_s *vector, void *element, size_t index);
-void *vector_get(vector_s *vector, size_t index);
-vector_s *vector_remove(vector_s *vector, size_t index);
-void *vector_free(vector_s *vector);
+ds_err_t vector_init(vector_s **vector_out, size_t elem_size);
+size_t vector_size(const vector_s *vector);
+size_t vector_capacity(const vector_s *vector);
+ds_err_t vector_push(vector_s *vector, void *element);
+ds_err_t vector_pop(vector_s *vector, void *element_out);
+ds_err_t vector_set(vector_s *vector, void *element, size_t index);
+ds_err_t vector_insert(vector_s *vector, void *element, size_t index);
+ds_err_t vector_get(vector_s *vector, size_t index, void *element_out);
+ds_err_t vector_remove(vector_s *vector, size_t index);
+ds_err_t vector_free(vector_s *vector);
+
 
 #endif // VECTOR_H

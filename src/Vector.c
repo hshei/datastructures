@@ -1,14 +1,14 @@
 #include "vector.h"
+#include "error.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-
-vector_s *vector_init(size_t elem_size){
+ds_err_t vector_init(vector_s **vector_out, size_t elem_size){
     vector_s *vector;
-    if ((vector = calloc(1, sizeof(vector_s))) == NULL){
-        fprintf(stderr, "Failed Vector Pointer...");
-        return NULL;
+    if ((vector = calloc(1, sizeof(vector_s))) == NULL){  // allocate vector FIRST
+        fprintf(stderr, "Failed to Allocate Memory for Vector Data...");
+        return DS_ERR_ALLOC;
     }
 
     vector->elem_size = elem_size;
@@ -17,20 +17,30 @@ vector_s *vector_init(size_t elem_size){
 
     if ((vector->data = calloc(vector->capacity, vector->elem_size)) == NULL){
         fprintf(stderr, "Failed to Allocate Memory for Vector Data...");
-        return NULL;
+        free(vector);  // <-- add this
+        return DS_ERR_ALLOC;
     }
 
-    return vector;
+    *vector_out = vector;
+    return DS_OK;
 }
 
-vector_s *vector_push(vector_s *vector, void *element){
+size_t vector_size(const vector_s *vector){
+    return vector->size;
+}
+
+size_t vector_capacity(const vector_s *vector){
+    return vector->capacity;
+}
+
+ds_err_t vector_push(vector_s *vector, void *element){
     if (vector->size >= vector->capacity){
-        size_t new_capacity = vector->capacity * 1.5;
+        size_t new_capacity = vector->capacity + (vector->capacity >> 1); /* 1.5x growth */
         void *tmp = realloc(vector->data, new_capacity * vector->elem_size);
 
         if (tmp == NULL){
             fprintf(stderr, "Failed to Reallocate Memory for Vector...");
-            return NULL;
+            return DS_ERR_ALLOC;
         }
 
         vector->data = tmp;
@@ -43,48 +53,49 @@ vector_s *vector_push(vector_s *vector, void *element){
 
     vector->size += 1;
 
-    return vector;
+    return DS_OK;
 }
 
-void *vector_pop(vector_s *vector){
+ds_err_t vector_pop(vector_s *vector, void *element_out){
     if (vector->size == 0){
         fprintf(stderr, "This vector does not have any elements");
-        return NULL;
+        return DS_ERR_EMPTY;
     }
     vector->size -= 1;
     
     char *base = (char *)vector->data;
     char *element = base + vector->size * vector->elem_size;
     
-    return (void *) element;
+    memcpy(element_out, element, vector->elem_size);    
+    return DS_OK;
 }
 
-vector_s *vector_set(vector_s *vector, void *element, size_t index){
+ds_err_t vector_set(vector_s *vector, void *element, size_t index){
     if (index >= vector->size){
         fprintf(stderr, "Invalid Index, the current size of the vector is %zu\n", vector->size);
-        return NULL;
+        return DS_ERR_OUT_OF_BOUNDS;
     }   
 
     char *base = (char *)vector->data;
     char *old_element = base + index * vector->elem_size;
     memcpy(old_element, element, vector->elem_size);
 
-    return vector;
+    return DS_OK;
 }
 
-vector_s *vector_insert(vector_s *vector, void *element, size_t index){
+ds_err_t vector_insert(vector_s *vector, void *element, size_t index){
     if (index > vector->size){
         fprintf(stderr, "Invalid Index, the current size of the vector is %zu\n", vector->size);
-        return NULL;
+        return DS_ERR_OUT_OF_BOUNDS;
     }
 
     if (vector->size >= vector->capacity){
-        size_t new_capacity = vector->capacity * 1.5;
+        size_t new_capacity = vector->capacity + (vector->capacity >> 1); /* 1.5x growth */
         void *tmp = realloc(vector->data, new_capacity * vector->elem_size);
 
         if (tmp == NULL){
             fprintf(stderr, "Failed to Reallocate Memory for Vector...");
-            return NULL;
+            return DS_ERR_ALLOC;
         }
         
         vector->data = tmp;
@@ -103,25 +114,26 @@ vector_s *vector_insert(vector_s *vector, void *element, size_t index){
 
     vector->size += 1;
 
-    return vector;
+    return DS_OK;
 }
 
-void *vector_get(vector_s *vector, size_t index){
+ds_err_t vector_get(vector_s *vector, size_t index, void *element_out){
     if (index >= vector->size){
         fprintf(stderr, "Invalid Index, the current size of the vector is %zu\n", vector->size);
-        return NULL;
+        return DS_ERR_OUT_OF_BOUNDS;
     }
 
     char *base = (char *)vector->data;
     char *element = base + index * vector->elem_size;
 
-    return (void *) element;
+    memcpy(element_out, element, vector->elem_size);
+    return DS_OK;
 }
 
-vector_s *vector_remove(vector_s *vector, size_t index){
+ds_err_t vector_remove(vector_s *vector, size_t index){
     if (index >= vector->size){
         fprintf(stderr, "Invalid Index, the current size of the vector is %zu\n", vector->size);
-        return NULL;
+        return DS_ERR_OUT_OF_BOUNDS;
     }
 
     char *base = (char *)vector->data;
@@ -134,19 +146,19 @@ vector_s *vector_remove(vector_s *vector, size_t index){
     }
     vector->size -= 1;
 
-    return vector;
+    return DS_OK;
 }
 
-void vector_free(vector_s *vector){
+ds_err_t vector_free(vector_s *vector){
     if (vector == NULL){
-        return;
+        return DS_OK;
     }
 
     if (vector->data != NULL){
         free(vector->data);
-        vector->data;
+        vector->data = NULL;
     }
 
     free(vector);
-    return;
+    return DS_OK;
 }

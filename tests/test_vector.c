@@ -1,438 +1,646 @@
 #include "datastructures.h"
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
+#include <assert.h>
 
-/* Test 1: char type - ALL OPERATIONS */
-static void test_vector_char(void) {
-    printf("\n=== Test: vector<char> - ALL OPERATIONS ===\n");
-    vector_s *v = vector_init(sizeof(char));
-    assert(v != NULL);
+/* ─────────────────────────────────────────────
+   Helpers
+───────────────────────────────────────────── */
 
-    // PUSH
-    printf("  [PUSH] Adding 5 characters (H,e,l,l,o)...\n");
-    char chars[] = {'H', 'e', 'l', 'l', 'o'};
+static int tests_run    = 0;
+static int tests_passed = 0;
+
+#define TEST(name) \
+    do { \
+        printf("  %-55s", name); \
+        tests_run++; \
+    } while(0)
+
+#define PASS() \
+    do { \
+        printf("PASS\n"); \
+        tests_passed++; \
+    } while(0)
+
+#define FAIL(msg) \
+    do { \
+        printf("FAIL  (%s:%d) %s\n", __FILE__, __LINE__, msg); \
+    } while(0)
+
+#define CHECK(cond, msg) \
+    do { \
+        if (!(cond)) { FAIL(msg); return; } \
+    } while(0)
+
+/* ─────────────────────────────────────────────
+   Custom structs used in tests
+───────────────────────────────────────────── */
+
+typedef struct {
+    int   x;
+    int   y;
+} Point;
+
+typedef struct {
+    char  name[32];
+    int   age;
+    float score;
+} Person;
+
+typedef struct {
+    int   matrix[4][4];
+} BigStruct;
+
+/* ─────────────────────────────────────────────
+   Utility: make_point / make_person
+───────────────────────────────────────────── */
+static Point make_point(int x, int y) {
+    Point p = { x, y };
+    return p;
+}
+
+static Person make_person(const char *name, int age, float score) {
+    Person p;
+    strncpy(p.name, name, sizeof(p.name) - 1);
+    p.name[sizeof(p.name) - 1] = '\0';
+    p.age   = age;
+    p.score = score;
+    return p;
+}
+
+/* ═══════════════════════════════════════════
+   TEST GROUPS
+═══════════════════════════════════════════ */
+
+/* ── 1. Init / Free ─────────────────────── */
+
+static void test_init_basic(void) {
+    TEST("init: basic initialisation");
+    vector_s *v = NULL;
+    CHECK(vector_init(&v, sizeof(int)) == DS_OK, "init returned error");
+    CHECK(v != NULL,                             "vector is NULL");
+    CHECK(vector_size(v)     == 0,               "size != 0");
+    CHECK(vector_capacity(v) == 16,              "capacity != 16");
+    vector_free(v);
+    PASS();
+}
+
+static void test_free_null(void) {
+    TEST("free: NULL pointer is safe");
+    CHECK(vector_free(NULL) == DS_OK, "free(NULL) returned error");
+    PASS();
+}
+
+static void test_init_custom_structs(void) {
+    TEST("init: Point and Person elem sizes");
+    vector_s *vp = NULL, *vper = NULL;
+    CHECK(vector_init(&vp,   sizeof(Point))  == DS_OK, "Point init failed");
+    CHECK(vector_init(&vper, sizeof(Person)) == DS_OK, "Person init failed");
+    vector_free(vp);
+    vector_free(vper);
+    PASS();
+}
+
+/* ── 2. Push / Size ─────────────────────── */
+
+static void test_push_ints(void) {
+    TEST("push: sequential ints, size grows");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    for (int i = 0; i < 10; i++) {
+        CHECK(vector_push(v, &i) == DS_OK, "push failed");
+    }
+    CHECK(vector_size(v) == 10, "size != 10");
+    vector_free(v);
+    PASS();
+}
+
+static void test_push_triggers_realloc(void) {
+    TEST("push: realloc triggered past initial capacity (16)");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    for (int i = 0; i < 32; i++) {
+        CHECK(vector_push(v, &i) == DS_OK, "push failed");
+    }
+    CHECK(vector_size(v)     == 32, "size != 32");
+    CHECK(vector_capacity(v) >  16, "capacity did not grow");
+    vector_free(v);
+    PASS();
+}
+
+static void test_push_points(void) {
+    TEST("push: custom Point structs");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(Point));
     for (int i = 0; i < 5; i++) {
-        assert(vector_push(v, &chars[i]) != NULL);
+        Point p = make_point(i, i * 2);
+        CHECK(vector_push(v, &p) == DS_OK, "push Point failed");
     }
-    assert(v->size == 5);
-    printf("    Size: %zu\n", v->size);
-
-    // GET
-    printf("  [GET] Retrieved at index 0: %c\n", *(char *)vector_get(v, 0));
-    assert(*(char *)vector_get(v, 0) == 'H');
-
-    // SET
-    printf("  [SET] Setting index 1 to 'A'...\n");
-    char setval = 'A';
-    assert(vector_set(v, &setval, 1) != NULL);
-    printf("    Value at index 1: %c\n", *(char *)vector_get(v, 1));
-    assert(*(char *)vector_get(v, 1) == 'A');
-
-    // INSERT
-    printf("  [INSERT] Inserting 'X' at index 2...\n");
-    char insval = 'X';
-    assert(vector_insert(v, &insval, 2) != NULL);
-    printf("    Size: %zu, String: ", v->size);
-    for (size_t i = 0; i < v->size; i++) printf("%c", *(char *)vector_get(v, i));
-    printf("\n");
-    assert(v->size == 6);
-
-    // REMOVE
-    printf("  [REMOVE] Removing element at index 3...\n");
-    assert(vector_remove(v, 3) != NULL);
-    printf("    Size: %zu, String: ", v->size);
-    for (size_t i = 0; i < v->size; i++) printf("%c", *(char *)vector_get(v, i));
-    printf("\n");
-    assert(v->size == 5);
-
-    // POP
-    printf("  [POP] Popping 2 elements...\n");
-    assert(vector_pop(v) != NULL);
-    assert(vector_pop(v) != NULL);
-    printf("    Size: %zu\n", v->size);
-    assert(v->size == 3);
-
+    CHECK(vector_size(v) == 5, "size != 5");
     vector_free(v);
-    printf("  OK\n");
+    PASS();
 }
 
-/* Test 2: float type - ALL OPERATIONS */
-static void test_vector_float(void) {
-    printf("\n=== Test: vector<float> - ALL OPERATIONS ===\n");
-    vector_s *v = vector_init(sizeof(float));
-    assert(v != NULL);
+static void test_push_persons(void) {
+    TEST("push: custom Person structs");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(Person));
+    Person alice = make_person("Alice", 30, 9.5f);
+    Person bob   = make_person("Bob",   25, 8.0f);
+    CHECK(vector_push(v, &alice) == DS_OK, "push Alice failed");
+    CHECK(vector_push(v, &bob)   == DS_OK, "push Bob failed");
+    CHECK(vector_size(v) == 2, "size != 2");
+    vector_free(v);
+    PASS();
+}
 
-    // PUSH
-    printf("  [PUSH] Adding 4 floats (1.5, 2.5, 3.5, 4.5)...\n");
-    float values[] = {1.5f, 2.5f, 3.5f, 4.5f};
+static void test_push_big_struct(void) {
+    TEST("push: large struct (4x4 int matrix)");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(BigStruct));
+    BigStruct bs;
+    for (int r = 0; r < 4; r++)
+        for (int c = 0; c < 4; c++)
+            bs.matrix[r][c] = r * 4 + c;
+    CHECK(vector_push(v, &bs) == DS_OK, "push BigStruct failed");
+    CHECK(vector_size(v) == 1, "size != 1");
+    vector_free(v);
+    PASS();
+}
+
+/* ── 3. Get ─────────────────────────────── */
+
+static void test_get_correct_value(void) {
+    TEST("get: values match what was pushed (int)");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    for (int i = 0; i < 8; i++) vector_push(v, &i);
+    for (int i = 0; i < 8; i++) {
+        int out = -1;
+        CHECK(vector_get(v, (size_t)i, &out) == DS_OK, "get failed");
+        CHECK(out == i, "value mismatch");
+    }
+    vector_free(v);
+    PASS();
+}
+
+static void test_get_point(void) {
+    TEST("get: Point struct fields preserved");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(Point));
+    Point p = make_point(42, 99);
+    vector_push(v, &p);
+    Point out = {0, 0};
+    CHECK(vector_get(v, 0, &out) == DS_OK, "get failed");
+    CHECK(out.x == 42 && out.y == 99, "Point fields wrong");
+    vector_free(v);
+    PASS();
+}
+
+static void test_get_person(void) {
+    TEST("get: Person struct fields preserved");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(Person));
+    Person p = make_person("Charlie", 40, 7.7f);
+    vector_push(v, &p);
+    Person out;
+    memset(&out, 0, sizeof(out));
+    CHECK(vector_get(v, 0, &out) == DS_OK, "get failed");
+    CHECK(strcmp(out.name, "Charlie") == 0, "name mismatch");
+    CHECK(out.age == 40,                    "age mismatch");
+    vector_free(v);
+    PASS();
+}
+
+static void test_get_out_of_bounds(void) {
+    TEST("get: out-of-bounds returns DS_ERR_OUT_OF_BOUNDS");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    int val = 1;
+    vector_push(v, &val);
+    int out = 0;
+    CHECK(vector_get(v, 5, &out) == DS_ERR_OUT_OF_BOUNDS, "expected OOB error");
+    vector_free(v);
+    PASS();
+}
+
+static void test_get_empty_vector(void) {
+    TEST("get: empty vector returns DS_ERR_OUT_OF_BOUNDS");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    int out = 0;
+    CHECK(vector_get(v, 0, &out) == DS_ERR_OUT_OF_BOUNDS, "expected OOB error");
+    vector_free(v);
+    PASS();
+}
+
+/* ── 4. Set ─────────────────────────────── */
+
+static void test_set_basic(void) {
+    TEST("set: overwrites existing value");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    int val = 10; vector_push(v, &val);
+    val = 99;
+    CHECK(vector_set(v, &val, 0) == DS_OK, "set failed");
+    int out = 0;
+    vector_get(v, 0, &out);
+    CHECK(out == 99, "value not updated");
+    vector_free(v);
+    PASS();
+}
+
+static void test_set_point(void) {
+    TEST("set: overwrites Point struct");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(Point));
+    Point p = make_point(1, 2); vector_push(v, &p);
+    Point newp = make_point(7, 8);
+    CHECK(vector_set(v, &newp, 0) == DS_OK, "set failed");
+    Point out = {0, 0};
+    vector_get(v, 0, &out);
+    CHECK(out.x == 7 && out.y == 8, "Point not updated");
+    vector_free(v);
+    PASS();
+}
+
+static void test_set_out_of_bounds(void) {
+    TEST("set: out-of-bounds returns DS_ERR_OUT_OF_BOUNDS");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    int val = 5; vector_push(v, &val);
+    CHECK(vector_set(v, &val, 10) == DS_ERR_OUT_OF_BOUNDS, "expected OOB error");
+    vector_free(v);
+    PASS();
+}
+
+/* ── 5. Pop ─────────────────────────────── */
+
+static void test_pop_basic(void) {
+    TEST("pop: returns last element, shrinks size");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    int a = 1, b = 2, c = 3;
+    vector_push(v, &a); vector_push(v, &b); vector_push(v, &c);
+    int out = 0;
+    CHECK(vector_pop(v, &out) == DS_OK, "pop failed");
+    CHECK(out == 3,              "wrong value popped");
+    CHECK(vector_size(v) == 2,   "size not decremented");
+    vector_free(v);
+    PASS();
+}
+
+static void test_pop_all(void) {
+    TEST("pop: pop all elements one by one");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    for (int i = 0; i < 5; i++) vector_push(v, &i);
+    for (int i = 4; i >= 0; i--) {
+        int out = -1;
+        CHECK(vector_pop(v, &out) == DS_OK, "pop failed");
+        CHECK(out == i, "wrong pop order");
+    }
+    CHECK(vector_size(v) == 0, "size should be 0");
+    vector_free(v);
+    PASS();
+}
+
+static void test_pop_empty(void) {
+    TEST("pop: empty vector returns DS_ERR_EMPTY");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    int out = 0;
+    CHECK(vector_pop(v, &out) == DS_ERR_EMPTY, "expected EMPTY error");
+    vector_free(v);
+    PASS();
+}
+
+static void test_pop_point(void) {
+    TEST("pop: Point struct value correct");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(Point));
+    Point p = make_point(11, 22);
+    vector_push(v, &p);
+    Point out = {0, 0};
+    CHECK(vector_pop(v, &out) == DS_OK, "pop failed");
+    CHECK(out.x == 11 && out.y == 22,   "Point fields wrong");
+    vector_free(v);
+    PASS();
+}
+
+/* ── 6. Insert ──────────────────────────── */
+
+static void test_insert_front(void) {
+    TEST("insert: at index 0 shifts all elements right");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    for (int i = 1; i <= 4; i++) vector_push(v, &i);  /* [1,2,3,4] */
+    int val = 99;
+    CHECK(vector_insert(v, &val, 0) == DS_OK, "insert failed");
+    /* expected: [99,1,2,3,4] */
+    int out = 0;
+    vector_get(v, 0, &out); CHECK(out == 99, "front value wrong");
+    vector_get(v, 1, &out); CHECK(out == 1,  "shifted value wrong");
+    CHECK(vector_size(v) == 5, "size wrong");
+    vector_free(v);
+    PASS();
+}
+
+static void test_insert_middle(void) {
+    TEST("insert: in the middle shifts right elements only");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    int vals[] = {1, 2, 4, 5};
+    for (int i = 0; i < 4; i++) vector_push(v, &vals[i]);
+    int val = 3;
+    CHECK(vector_insert(v, &val, 2) == DS_OK, "insert failed");
+    /* expected: [1,2,3,4,5] */
+    for (int i = 0; i < 5; i++) {
+        int out = 0;
+        vector_get(v, (size_t)i, &out);
+        CHECK(out == i + 1, "sequence broken after insert");
+    }
+    vector_free(v);
+    PASS();
+}
+
+static void test_insert_end(void) {
+    TEST("insert: at index == size behaves like push");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    int a = 1, b = 2;
+    vector_push(v, &a);
+    CHECK(vector_insert(v, &b, 1) == DS_OK, "insert at end failed");
+    int out = 0;
+    vector_get(v, 1, &out);
+    CHECK(out == 2, "value wrong");
+    vector_free(v);
+    PASS();
+}
+
+static void test_insert_out_of_bounds(void) {
+    TEST("insert: beyond size returns DS_ERR_OUT_OF_BOUNDS");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    int val = 1; vector_push(v, &val);
+    CHECK(vector_insert(v, &val, 5) == DS_ERR_OUT_OF_BOUNDS, "expected OOB error");
+    vector_free(v);
+    PASS();
+}
+
+static void test_insert_point(void) {
+    TEST("insert: Point struct inserted correctly");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(Point));
+    Point a = make_point(1, 1), b = make_point(3, 3), mid = make_point(2, 2);
+    vector_push(v, &a); vector_push(v, &b);
+    CHECK(vector_insert(v, &mid, 1) == DS_OK, "insert failed");
+    Point out = {0, 0};
+    vector_get(v, 1, &out);
+    CHECK(out.x == 2 && out.y == 2, "inserted Point wrong");
+    vector_free(v);
+    PASS();
+}
+
+/* ── 7. Remove ──────────────────────────── */
+
+static void test_remove_front(void) {
+    TEST("remove: index 0 shifts all elements left");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    for (int i = 0; i < 5; i++) vector_push(v, &i); /* [0,1,2,3,4] */
+    CHECK(vector_remove(v, 0) == DS_OK, "remove failed");
+    int out = 0;
+    vector_get(v, 0, &out);
+    CHECK(out == 1,              "front element wrong after remove");
+    CHECK(vector_size(v) == 4,   "size wrong");
+    vector_free(v);
+    PASS();
+}
+
+static void test_remove_middle(void) {
+    TEST("remove: middle index compacts correctly");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    int vals[] = {1, 2, 99, 3, 4};
+    for (int i = 0; i < 5; i++) vector_push(v, &vals[i]);
+    CHECK(vector_remove(v, 2) == DS_OK, "remove failed");
     for (int i = 0; i < 4; i++) {
-        assert(vector_push(v, &values[i]) != NULL);
+        int out = 0;
+        vector_get(v, (size_t)i, &out);
+        CHECK(out == i + 1, "sequence broken after remove");
     }
-    assert(v->size == 4);
-    printf("    Size: %zu\n", v->size);
-
-    // GET
-    printf("  [GET] Retrieved at index 1: %.1f\n", *(float *)vector_get(v, 1));
-    assert(fabs(*(float *)vector_get(v, 1) - 2.5f) < 0.01f);
-
-    // SET
-    printf("  [SET] Setting index 0 to 9.9...\n");
-    float setval = 9.9f;
-    assert(vector_set(v, &setval, 0) != NULL);
-    printf("    Value at index 0: %.1f\n", *(float *)vector_get(v, 0));
-    assert(fabs(*(float *)vector_get(v, 0) - 9.9f) < 0.01f);
-
-    // INSERT
-    printf("  [INSERT] Inserting 7.7 at index 2...\n");
-    float insval = 7.7f;
-    assert(vector_insert(v, &insval, 2) != NULL);
-    printf("    Size: %zu, Contents: [", v->size);
-    for (size_t i = 0; i < v->size; i++) {
-        printf("%.1f", *(float *)vector_get(v, i));
-        if (i < v->size - 1) printf(", ");
-    }
-    printf("]\n");
-    assert(v->size == 5);
-
-    // REMOVE
-    printf("  [REMOVE] Removing element at index 1...\n");
-    assert(vector_remove(v, 1) != NULL);
-    printf("    Size: %zu\n", v->size);
-    assert(v->size == 4);
-
-    // POP
-    printf("  [POP] Popping 2 elements...\n");
-    assert(vector_pop(v) != NULL);
-    assert(vector_pop(v) != NULL);
-    printf("    Size: %zu\n", v->size);
-    assert(v->size == 2);
-
     vector_free(v);
-    printf("  OK\n");
+    PASS();
 }
 
-/* Test 3: double type - ALL OPERATIONS */
-static void test_vector_double(void) {
-    printf("\n=== Test: vector<double> - ALL OPERATIONS ===\n");
-    vector_s *v = vector_init(sizeof(double));
-    assert(v != NULL);
+static void test_remove_last(void) {
+    TEST("remove: last element decrements size only");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    int a = 1, b = 2;
+    vector_push(v, &a); vector_push(v, &b);
+    CHECK(vector_remove(v, 1) == DS_OK, "remove last failed");
+    CHECK(vector_size(v) == 1,          "size wrong");
+    vector_free(v);
+    PASS();
+}
 
-    // PUSH
-    printf("  [PUSH] Adding 3 doubles (3.14159, 2.71828, 1.41421)...\n");
-    double pi_approx[] = {3.14159265, 2.71828182, 1.41421356};
-    for (int i = 0; i < 3; i++) {
-        assert(vector_push(v, &pi_approx[i]) != NULL);
+static void test_remove_out_of_bounds(void) {
+    TEST("remove: out-of-bounds returns DS_ERR_OUT_OF_BOUNDS");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    int val = 1; vector_push(v, &val);
+    CHECK(vector_remove(v, 5) == DS_ERR_OUT_OF_BOUNDS, "expected OOB error");
+    vector_free(v);
+    PASS();
+}
+
+static void test_remove_empty(void) {
+    TEST("remove: empty vector returns DS_ERR_OUT_OF_BOUNDS");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    CHECK(vector_remove(v, 0) == DS_ERR_OUT_OF_BOUNDS, "expected OOB error");
+    vector_free(v);
+    PASS();
+}
+
+/* ── 8. Edge / stress cases ─────────────── */
+
+static void test_push_pop_interleaved(void) {
+    TEST("edge: interleaved push and pop stays consistent");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    int val, out;
+    val = 1; vector_push(v, &val);
+    val = 2; vector_push(v, &val);
+    vector_pop(v, &out); CHECK(out == 2, "wrong pop");
+    val = 3; vector_push(v, &val);
+    vector_pop(v, &out); CHECK(out == 3, "wrong pop");
+    vector_pop(v, &out); CHECK(out == 1, "wrong pop");
+    CHECK(vector_size(v) == 0, "size should be 0");
+    vector_free(v);
+    PASS();
+}
+
+static void test_large_volume(void) {
+    TEST("edge: 10 000 ints pushed then verified");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    for (int i = 0; i < 10000; i++) {
+        CHECK(vector_push(v, &i) == DS_OK, "push failed");
     }
-    assert(v->size == 3);
-    printf("    Size: %zu\n", v->size);
-
-    // GET
-    printf("  [GET] Retrieved at index 0: %.5f\n", *(double *)vector_get(v, 0));
-    assert(fabs(*(double *)vector_get(v, 0) - 3.14159265) < 0.00001);
-
-    // SET
-    printf("  [SET] Setting index 2 to 2.0...\n");
-    double setval = 2.0;
-    assert(vector_set(v, &setval, 2) != NULL);
-    printf("    Value at index 2: %.5f\n", *(double *)vector_get(v, 2));
-    assert(fabs(*(double *)vector_get(v, 2) - 2.0) < 0.00001);
-
-    // INSERT
-    printf("  [INSERT] Inserting 1.5 at index 1...\n");
-    double insval = 1.5;
-    assert(vector_insert(v, &insval, 1) != NULL);
-    printf("    Size: %zu\n", v->size);
-    assert(v->size == 4);
-
-    // REMOVE
-    printf("  [REMOVE] Removing element at index 0...\n");
-    assert(vector_remove(v, 0) != NULL);
-    printf("    Size: %zu\n", v->size);
-    assert(v->size == 3);
-
-    // POP
-    printf("  [POP] Popping 1 element...\n");
-    assert(vector_pop(v) != NULL);
-    printf("    Size: %zu\n", v->size);
-    assert(v->size == 2);
-
-    vector_free(v);
-    printf("  OK\n");
-}
-
-/* Test 4: struct type (simple) - ALL OPERATIONS */
-static void test_vector_struct_simple(void) {
-    printf("\n=== Test: vector<struct> - ALL OPERATIONS ===\n");
-    
-    typedef struct {
-        int id;
-        float score;
-    } student_t;
-
-    vector_s *v = vector_init(sizeof(student_t));
-    assert(v != NULL);
-
-    // PUSH
-    printf("  [PUSH] Adding 3 student structs...\n");
-    student_t students[] = {
-        {101, 85.5f},
-        {102, 92.0f},
-        {103, 78.5f},
-    };
-    for (int i = 0; i < 3; i++) {
-        assert(vector_push(v, &students[i]) != NULL);
+    CHECK(vector_size(v) == 10000, "size wrong");
+    for (int i = 0; i < 10000; i++) {
+        int out = -1;
+        vector_get(v, (size_t)i, &out);
+        CHECK(out == i, "value mismatch at large volume");
     }
-    assert(v->size == 3);
-    printf("    Size: %zu\n", v->size);
-
-    // GET
-    printf("  [GET] Retrieved at index 1: ID=%d, Score=%.1f\n",
-           ((student_t *)vector_get(v, 1))->id,
-           ((student_t *)vector_get(v, 1))->score);
-    assert(((student_t *)vector_get(v, 1))->id == 102);
-
-    // SET
-    printf("  [SET] Setting index 0 to ID=999, Score=100.0...\n");
-    student_t setval = {999, 100.0f};
-    assert(vector_set(v, &setval, 0) != NULL);
-    printf("    After set: ID=%d, Score=%.1f\n",
-           ((student_t *)vector_get(v, 0))->id,
-           ((student_t *)vector_get(v, 0))->score);
-    assert(((student_t *)vector_get(v, 0))->id == 999);
-
-    // INSERT
-    printf("  [INSERT] Inserting ID=555, Score=88.5 at index 1...\n");
-    student_t insval = {555, 88.5f};
-    assert(vector_insert(v, &insval, 1) != NULL);
-    printf("    Size: %zu\n", v->size);
-    assert(v->size == 4);
-
-    // REMOVE
-    printf("  [REMOVE] Removing element at index 2...\n");
-    assert(vector_remove(v, 2) != NULL);
-    printf("    Size: %zu\n", v->size);
-    assert(v->size == 3);
-
-    // POP
-    printf("  [POP] Popping 1 element...\n");
-    assert(vector_pop(v) != NULL);
-    printf("    Size: %zu\n", v->size);
-    assert(v->size == 2);
-
     vector_free(v);
-    printf("  OK\n");
+    PASS();
 }
 
-/* Test 5: struct with array type - ALL OPERATIONS */
-static void test_vector_struct_complex(void) {
-    printf("\n=== Test: vector<complex struct> - ALL OPERATIONS ===\n");
-    
-    typedef struct {
-        char name[20];
-        int grades[5];
-        size_t grade_count;
-    } student_record_t;
+static void test_single_element_all_ops(void) {
+    TEST("edge: single-element vector survives get/set/pop/remove");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    int val = 42; vector_push(v, &val);
 
-    vector_s *v = vector_init(sizeof(student_record_t));
-    assert(v != NULL);
+    int out = 0;
+    CHECK(vector_get(v, 0, &out) == DS_OK && out == 42, "get failed");
 
-    // PUSH
-    printf("  [PUSH] Adding 2 complex student records...\n");
-    student_record_t alice;
-    strcpy(alice.name, "Alice");
-    alice.grades[0] = 95;
-    alice.grades[1] = 87;
-    alice.grades[2] = 92;
-    alice.grade_count = 3;
+    val = 77;
+    CHECK(vector_set(v, &val, 0) == DS_OK, "set failed");
+    vector_get(v, 0, &out);
+    CHECK(out == 77, "set value wrong");
 
-    student_record_t bob;
-    strcpy(bob.name, "Bob");
-    bob.grades[0] = 78;
-    bob.grades[1] = 85;
-    bob.grade_count = 2;
-
-    assert(vector_push(v, &alice) != NULL);
-    assert(vector_push(v, &bob) != NULL);
-    assert(v->size == 2);
-    printf("    Size: %zu\n", v->size);
-
-    // GET
-    printf("  [GET] Retrieved at index 0: %s\n", ((student_record_t *)vector_get(v, 0))->name);
-    assert(strcmp(((student_record_t *)vector_get(v, 0))->name, "Alice") == 0);
-
-    // SET
-    printf("  [SET] Setting index 1 name to 'Charlie'...\n");
-    student_record_t charlie;
-    strcpy(charlie.name, "Charlie");
-    charlie.grades[0] = 88;
-    charlie.grades[1] = 88;
-    charlie.grades[2] = 88;
-    charlie.grade_count = 3;
-    assert(vector_set(v, &charlie, 1) != NULL);
-    printf("    After set: %s\n", ((student_record_t *)vector_get(v, 1))->name);
-    assert(strcmp(((student_record_t *)vector_get(v, 1))->name, "Charlie") == 0);
-
-    // INSERT
-    printf("  [INSERT] Inserting new record at index 1...\n");
-    student_record_t diana;
-    strcpy(diana.name, "Diana");
-    diana.grades[0] = 90;
-    diana.grades[1] = 90;
-    diana.grade_count = 2;
-    assert(vector_insert(v, &diana, 1) != NULL);
-    printf("    Size: %zu\n", v->size);
-    assert(v->size == 3);
-
-    // REMOVE
-    printf("  [REMOVE] Removing element at index 0...\n");
-    assert(vector_remove(v, 0) != NULL);
-    printf("    Size: %zu, First name is now: %s\n", v->size, ((student_record_t *)vector_get(v, 0))->name);
-    assert(v->size == 2);
-
-    // POP
-    printf("  [POP] Popping 1 element...\n");
-    assert(vector_pop(v) != NULL);
-    printf("    Size: %zu\n", v->size);
-    assert(v->size == 1);
-
+    CHECK(vector_pop(v, &out) == DS_OK && out == 77, "pop failed");
+    CHECK(vector_size(v) == 0, "size should be 0 after pop");
     vector_free(v);
-    printf("  OK\n");
+    PASS();
 }
 
-/* Test 6: pointer type - ALL OPERATIONS */
-static void test_vector_pointer(void) {
-    printf("\n=== Test: vector<pointer> - ALL OPERATIONS ===\n");
-    
-    vector_s *v = vector_init(sizeof(void *));
-    assert(v != NULL);
-
-    // PUSH
-    printf("  [PUSH] Adding 3 void pointers to integers...\n");
-    int vals[] = {10, 20, 30};
-    void *p1 = &vals[0];
-    void *p2 = &vals[1];
-    void *p3 = &vals[2];
-    assert(vector_push(v, &p1) != NULL);
-    assert(vector_push(v, &p2) != NULL);
-    assert(vector_push(v, &p3) != NULL);
-    assert(v->size == 3);
-    printf("    Size: %zu\n", v->size);
-
-    // GET
-    printf("  [GET] Retrieved at index 1, dereferenced: %d\n",
-           *((int *)*(void **)vector_get(v, 1)));
-    assert(*((int *)*(void **)vector_get(v, 1)) == 20);
-
-    // SET
-    printf("  [SET] Updating pointer at index 2...\n");
-    int val_new = 333;
-    void *ptr_new = &val_new;
-    assert(vector_set(v, &ptr_new, 2) != NULL);
-    printf("    Dereferenced: %d\n", *((int *)*(void **)vector_get(v, 2)));
-    assert(*((int *)*(void **)vector_get(v, 2)) == 333);
-
-    // INSERT
-    printf("  [INSERT] Inserting pointer at index 1...\n");
-    int val_ins = 111;
-    void *ptr_ins = &val_ins;
-    assert(vector_insert(v, &ptr_ins, 1) != NULL);
-    printf("    Size: %zu\n", v->size);
-    assert(v->size == 4);
-
-    // REMOVE
-    printf("  [REMOVE] Removing pointer at index 0...\n");
-    assert(vector_remove(v, 0) != NULL);
-    printf("    Size: %zu\n", v->size);
-    assert(v->size == 3);
-
-    // POP
-    printf("  [POP] Popping 1 element...\n");
-    assert(vector_pop(v) != NULL);
-    printf("    Size: %zu\n", v->size);
-    assert(v->size == 2);
-
+static void test_insert_into_empty(void) {
+    TEST("edge: insert at index 0 into empty vector");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    int val = 5;
+    CHECK(vector_insert(v, &val, 0) == DS_OK, "insert into empty failed");
+    CHECK(vector_size(v) == 1, "size wrong");
+    int out = 0;
+    vector_get(v, 0, &out);
+    CHECK(out == 5, "value wrong");
     vector_free(v);
-    printf("  OK\n");
+    PASS();
 }
 
-/* Test 7: mixed operations on int type - ALL OPERATIONS */
-static void test_vector_mixed_operations(void) {
-    printf("\n=== Test: vector<int> - ALL OPERATIONS (comprehensive) ===\n");
-    
-    vector_s *v = vector_init(sizeof(int));
-    assert(v != NULL);
-
-    // PUSH 10 elements
-    printf("  [PUSH] Adding 10 integers (1..10)...\n");
-    for (int i = 1; i <= 10; i++) {
-        assert(vector_push(v, &i) != NULL);
+static void test_repeated_insert_remove_front(void) {
+    TEST("edge: repeated insert/remove at front preserves data");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(int));
+    for (int i = 0; i < 8; i++) {
+        int val = i;
+        vector_push(v, &val);
     }
-    assert(v->size == 10);
-    printf("    Size: %zu\n", v->size);
-
-    // GET multiple elements
-    printf("  [GET] Retrieved at indices 2, 5, 9: %d, %d, %d\n",
-           *(int *)vector_get(v, 2),
-           *(int *)vector_get(v, 5),
-           *(int *)vector_get(v, 9));
-    assert(*(int *)vector_get(v, 2) == 3);
-    assert(*(int *)vector_get(v, 5) == 6);
-    assert(*(int *)vector_get(v, 9) == 10);
-
-    // SET an element
-    printf("  [SET] Setting index 0 to 100...\n");
-    int val = 100;
-    assert(vector_set(v, &val, 0) != NULL);
-    assert(*(int *)vector_get(v, 0) == 100);
-    printf("    After set: %d\n", *(int *)vector_get(v, 0));
-    
-    // INSERT an element
-    printf("  [INSERT] Inserting 50 at index 5...\n");
-    int insert_val = 50;
-    assert(vector_insert(v, &insert_val, 5) != NULL);
-    assert(v->size == 11);
-    printf("    Size after insert: %zu\n", v->size);
-
-    // REMOVE an element
-    printf("  [REMOVE] Removing element at index 3...\n");
-    assert(vector_remove(v, 3) != NULL);
-    assert(v->size == 10);
-    printf("    Size after remove: %zu\n", v->size);
-
-    // POP elements
-    printf("  [POP] Popping 3 elements...\n");
-    assert(vector_pop(v) != NULL);
-    assert(vector_pop(v) != NULL);
-    assert(vector_pop(v) != NULL);
-    assert(v->size == 7);
-    printf("    Size after pop: %zu\n", v->size);
-
-    // Verify final state
-    printf("  Final contents: [");
-    for (size_t i = 0; i < v->size; i++) {
-        printf("%d%s", *(int *)vector_get(v, i), i < v->size - 1 ? ", " : "");
+    /* insert 99 at front, then immediately remove it, 50 times */
+    for (int i = 0; i < 50; i++) {
+        int val = 99;
+        vector_insert(v, &val, 0);
+        vector_remove(v, 0);
     }
-    printf("]\n");
-
+    CHECK(vector_size(v) == 8, "size corrupted");
+    for (int i = 0; i < 8; i++) {
+        int out = -1;
+        vector_get(v, (size_t)i, &out);
+        CHECK(out == i, "data corrupted after repeated insert/remove");
+    }
     vector_free(v);
-    printf("  OK\n");
+    PASS();
 }
+
+static void test_person_data_integrity_after_realloc(void) {
+    TEST("edge: Person data intact after multiple reallocations");
+    vector_s *v = NULL;
+    vector_init(&v, sizeof(Person));
+    /* push 100 persons — will trigger several reallocations */
+    for (int i = 0; i < 100; i++) {
+        char name[32];
+        snprintf(name, sizeof(name), "Person%d", i);
+        Person p = make_person(name, i, (float)i * 0.5f);
+        CHECK(vector_push(v, &p) == DS_OK, "push failed");
+    }
+    for (int i = 0; i < 100; i++) {
+        Person out;
+        memset(&out, 0, sizeof(out));
+        vector_get(v, (size_t)i, &out);
+        CHECK(out.age == i, "age corrupted after realloc");
+    }
+    vector_free(v);
+    PASS();
+}
+
+/* ═══════════════════════════════════════════
+   MAIN
+═══════════════════════════════════════════ */
 
 int main(void) {
-    printf("=== DATA STRUCTURES LIBRARY: TYPE INDEPENDENCE TESTS ===\n");
-    
-    test_vector_char();
-    test_vector_float();
-    test_vector_double();
-    test_vector_struct_simple();
-    test_vector_struct_complex();
-    test_vector_pointer();
-    test_vector_mixed_operations();
-    
-    printf("\nAll type independence tests passed.\n");
-    return EXIT_SUCCESS;
-}
+    printf("\n=== vector_s test suite ===\n\n");
 
+    printf("[ Init / Free ]\n");
+    test_init_basic();
+    test_free_null();
+    test_init_custom_structs();
+
+    printf("\n[ Push / Size ]\n");
+    test_push_ints();
+    test_push_triggers_realloc();
+    test_push_points();
+    test_push_persons();
+    test_push_big_struct();
+
+    printf("\n[ Get ]\n");
+    test_get_correct_value();
+    test_get_point();
+    test_get_person();
+    test_get_out_of_bounds();
+    test_get_empty_vector();
+
+    printf("\n[ Set ]\n");
+    test_set_basic();
+    test_set_point();
+    test_set_out_of_bounds();
+
+    printf("\n[ Pop ]\n");
+    test_pop_basic();
+    test_pop_all();
+    test_pop_empty();
+    test_pop_point();
+
+    printf("\n[ Insert ]\n");
+    test_insert_front();
+    test_insert_middle();
+    test_insert_end();
+    test_insert_out_of_bounds();
+    test_insert_point();
+
+    printf("\n[ Remove ]\n");
+    test_remove_front();
+    test_remove_middle();
+    test_remove_last();
+    test_remove_out_of_bounds();
+    test_remove_empty();
+
+    printf("\n[ Edge / Stress ]\n");
+    test_push_pop_interleaved();
+    test_large_volume();
+    test_single_element_all_ops();
+    test_insert_into_empty();
+    test_repeated_insert_remove_front();
+    test_person_data_integrity_after_realloc();
+
+    printf("\n═══════════════════════════════════════════\n");
+    printf("Results: %d / %d passed\n\n", tests_passed, tests_run);
+
+    return (tests_passed == tests_run) ? 0 : 1;
+}

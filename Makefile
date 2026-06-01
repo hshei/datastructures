@@ -5,17 +5,20 @@ ARFLAGS = rcs
 
 BUILD = build
 LIB = $(BUILD)/libdatastructures.a
-SRC = src/Vector.c
-OBJ = $(BUILD)/Vector.o
+SRCS = src/vector.c src/error.c
+OBJS = $(BUILD)/vector.o $(BUILD)/error.o
 TEST = $(BUILD)/vector_test
 
 all: $(LIB) $(TEST)
 
-$(OBJ): $(SRC) include/datastructures.h include/vector.h
-	$(CC) $(CFLAGS) -c $(SRC) -o $(OBJ)
+$(BUILD)/vector.o: src/vector.c include/datastructures.h include/vector.h
+	$(CC) $(CFLAGS) -c src/vector.c -o $(BUILD)/vector.o
 
-$(LIB): $(OBJ)
-	$(AR) $(ARFLAGS) $(LIB) $(OBJ)
+$(BUILD)/error.o: src/error.c include/datastructures.h include/error.h
+	$(CC) $(CFLAGS) -c src/error.c -o $(BUILD)/error.o
+
+$(LIB): $(OBJS)
+	$(AR) $(ARFLAGS) $(LIB) $(OBJS)
 
 $(TEST): tests/test_vector.c $(LIB) include/datastructures.h
 	$(CC) $(CFLAGS) tests/test_vector.c -L$(BUILD) -ldatastructures -o $(TEST)
