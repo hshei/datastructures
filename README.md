@@ -6,88 +6,25 @@ A type-independent data structures library for C. Store **any data type** in the
 
 **Vector** — A fully dynamic array that works with any data type. Push, pop, insert, remove, set, get. All the usual stuff.
 
-```c
-// Works with ANY type
-vector_s *vec_ints;
-vector_s *vec_floats;
-vector_s *vec_students;
+**Linked List** — A singly-linked list that works with any data type. Push front/back, pop front/back, insert, remove, get, set. Full control with no type constraints.
 
+### Vector Examples
+
+**Basic Usage with Integers:**
+
+```c
+vector_s *vec_ints = NULL;
 vector_init(&vec_ints, sizeof(int));
-vector_init(&vec_floats, sizeof(float));
-vector_init(&vec_students, sizeof(student_t));
 
-// Same API for all types
 int x = 42;
-float pi = 3.14f;
-
 vector_push(vec_ints, &x);
-vector_push(vec_floats, &pi);
+
+int result;
+vector_get(vec_ints, 0, &result);
+printf("Value: %d\n", result);  // Output: 42
+
+vector_free(vec_ints);
 ```
-
-More data structures coming as we go.
-
-## Build & Test
-
-```sh
-make            # Builds the library and tests
-./build/vector_test   # Run the test suite
-```
-
-Tests cover **all 7 operations** (push, get, set, insert, remove, pop) on **7 different types**:
-- char, float, double, int
-- Simple struct, complex struct with nested arrays
-- Void pointers
-
-Everything passes. ✅
-
-## Use It in Your Code
-
-Compile your program:
-
-```sh
-cc -Wall -Wextra -std=c11 -Iinclude my_program.c -Lbuild -ldatastructures -o my_program
-```
-
-### Quick Start Example
-
-```c
-#include "datastructures.h"
-#include <stdio.h>
-
-int main() {
-    vector_s *nums = NULL;
-    
-    // Create a vector for ints
-    if (vector_init(&nums, sizeof(int)) != DS_OK) {
-        fprintf(stderr, "Failed to create vector\n");
-        return 1;
-    }
-    
-    // Add some numbers
-    int values[] = {10, 20, 30};
-    for (int i = 0; i < 3; i++) {
-        if (vector_push(nums, &values[i]) != DS_OK) {
-            fprintf(stderr, "Push failed\n");
-            vector_free(nums);
-            return 1;
-        }
-    }
-    
-    // Get a value
-    int result;
-    if (vector_get(nums, 1, &result) != DS_OK) {
-        fprintf(stderr, "Get failed\n");
-        vector_free(nums);
-        return 1;
-    }
-    printf("Value at index 1: %d\n", result);  // Output: 20
-    
-    vector_free(nums);
-    return 0;
-}
-```
-
-### More Examples
 
 **Working with Floats:**
 
@@ -117,39 +54,16 @@ vector_s *people = NULL;
 vector_init(&people, sizeof(person_t));
 
 person_t alice = {"Alice", 30};
-person_t bob = {"Bob", 25};
-
 vector_push(people, &alice);
-vector_push(people, &bob);
 
-// Get someone back
 person_t person;
 vector_get(people, 0, &person);
-printf("%s is %d years old\n", person.name, person.age);  // Output: Alice is 30 years old
+printf("%s is %d years old\n", person.name, person.age);
 
 vector_free(people);
 ```
 
-**Modifying Elements:**
-
-```c
-vector_s *scores = NULL;
-vector_init(&scores, sizeof(int));
-
-int score = 85;
-vector_push(scores, &score);
-
-// Update the score at index 0
-int new_score = 95;
-vector_set(scores, &new_score, 0);
-
-vector_get(scores, 0, &score);
-printf("Updated score: %d\n", score);  // Output: 95
-
-vector_free(scores);
-```
-
-**Inserting & Removing:**
+**Modifying and Removing Elements:**
 
 ```c
 vector_s *data = NULL;
@@ -174,81 +88,37 @@ vector_pop(data, &popped);
 vector_free(data);
 ```
 
-## API Reference
+### Linked List Examples
 
-### Initialization
 ```c
-ds_err_t vector_init(vector_s **vector_out, size_t elem_size);
-```
-Creates a new vector that holds elements of size `elem_size`. Pass a pointer to your vector pointer.
+// Initialize a linked list for integers
+linked_list_s *list_ints;
+llist_init(&list_ints, sizeof(int));
 
-### Inspection
-```c
-size_t vector_size(const vector_s *vector);      // How many elements are in it?
-size_t vector_capacity(const vector_s *vector);  // How much space allocated?
-```
+// Push elements to front and back
+int a = 10, b = 20, c = 30;
+llist_push_back(list_ints, &a);   // [10]
+llist_push_back(list_ints, &b);   // [10, 20]
+llist_push_front(list_ints, &c);  // [30, 10, 20]
 
-### Adding Elements
-```c
-ds_err_t vector_push(vector_s *vector, void *element);           // Add to the end
-ds_err_t vector_insert(vector_s *vector, void *element, size_t index);  // Insert at position
-```
+// Get element at index
+int result;
+llist_get(list_ints, 1, &result);  // result = 10
 
-### Accessing Elements
-```c
-ds_err_t vector_get(vector_s *vector, size_t index, void *element_out);  // Read element
-ds_err_t vector_set(vector_s *vector, void *element, size_t index);      // Replace element
-```
+// Insert at specific position
+int x = 15;
+llist_insert(list_ints, &x, 2);   // [30, 10, 15, 20]
 
-### Removing Elements
-```c
-ds_err_t vector_pop(vector_s *vector, void *element_out);     // Remove from end
-ds_err_t vector_remove(vector_s *vector, size_t index);       // Remove from position
-```
+// Remove element at index
+llist_remove(list_ints, 0);       // [10, 15, 20]
 
-### Cleanup
-```c
-ds_err_t vector_free(vector_s *vector);  // Free all memory
+// Pop from front/back
+int popped;
+llist_pop_back(list_ints, &popped);   // popped = 20
+llist_pop_front(list_ints, &popped);  // popped = 10
+
+// Clean up
+llist_free(list_ints);
 ```
 
-## Error Handling
-
-All functions return a `ds_err_t` error code:
-- `DS_OK` — Success
-- `DS_ERR_ALLOC` — Memory allocation failed
-- `DS_ERR_OUT_OF_BOUNDS` — Index out of range
-- `DS_ERR_EMPTY` — Vector is empty
-- `DS_ERR_INVALID_ARGUMENT` — Bad argument
-
-Always check the return values! (See examples above.)
-
-## Architecture
-
-```
-src/              — Implementation
-include/          — Public headers
-tests/            — Test files
-build/            — Compiled objects and archives (generated)
-Makefile          — Build automation
-```
-
-Each data structure gets its own `.c` and `.h` pair. New structures are included in `include/datastructures.h` so you only need to `#include "datastructures.h"`.
-
-## Adding More Data Structures
-
-1. Create `src/NewStructure.c` and `include/newstructure.h`
-2. Implement your structure following the vector pattern
-3. Add `#include "newstructure.h"` to `include/datastructures.h`
-4. Update the Makefile to compile your `.c` file
-5. Create `tests/test_newstructure.c`
-
-## Push to GitHub (When Ready)
-
-```sh
-git init
-git add .
-git commit -m "Type-independent data structures library"
-git remote add origin https://github.com/<hshei>/datastructures.git
-git branch -M main
-git push -u origin main
-```
+More data structures coming as we go.
