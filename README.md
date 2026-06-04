@@ -35,7 +35,7 @@ This compiles the library and creates object files in the `build/` directory.
 2. **Link against the library:**
    When compiling your program, link the data structure object files:
    ```bash
-   gcc your_program.c Data\ Structures/src/vector.c Data\ Structures/src/linked_list.c Data\ Structures/src/hashmap.c -I Data\ Structures/include -o your_program
+   gcc your_program.c datastructures/src/vector.c datastructures/src/linked_list.c datastructures/src/hashmap.c -I datastructures/include -o your_program
    ```
 
 3. **Or use the Makefile:**
