@@ -13,6 +13,28 @@ static size_t hash(const void *key, size_t key_size, size_t bucket_count){
     return h % bucket_count;
 }
 
+static ds_err_t hm_rehash(hashmap_s *hm){
+    size_t new_count = hm->bucket_count * 2;
+    hm_entry_s **new_bucket;
+    if ((new_bucket = calloc(new_count, sizeof(hm_entry_s *))) == NULL) return DS_ERR_ALLOC;
+    for (size_t i = 0; i < hm->bucket_count; i++){
+        hm_entry_s *entry = hm->buckets[i];
+        if (entry == NULL) continue;
+        while (entry != NULL){
+            hm_entry_s *next_entry = entry->next;
+            size_t new_index = hash(entry->key, hm->key_size, new_count);
+            entry->next = new_bucket[new_index];
+            new_bucket[new_index] = entry;
+            entry = next_entry;
+        }
+    }
+    free(hm->buckets);
+    hm->buckets = new_bucket;
+    hm->bucket_count = new_count;
+
+    return DS_OK;
+}
+
 ds_err_t hm_init(hashmap_s **hm_out, size_t key_size, size_t value_size, size_t bucket_count){
     hashmap_s *hm;
     if ((hm = calloc(1, sizeof(hashmap_s))) == NULL) return DS_ERR_ALLOC;
@@ -52,6 +74,9 @@ ds_err_t hm_insert(hashmap_s *hm, void *key, void *value){
     hm->buckets[index] = new_entry;
 
     hm->size += 1;
+
+    if ((double)hm->size / (double)hm->bucket_count > 0.75)
+        return hm_rehash(hm);
 
     return DS_OK;
 }

@@ -2,123 +2,122 @@
 
 A type-independent data structures library for C. Store **any data type** in the same container—ints, floats, structs, pointers, you name it. No macros, no template nonsense. Just solid C.
 
-## What's Here?
+## Understanding `void *` — C's Way of Generics
 
-**Vector** — A fully dynamic array that works with any data type. Push, pop, insert, remove, set, get. All the usual stuff.
+This library uses `void *` (void pointer) to achieve type-generic data structures. A `void *` is a pointer that can point to **any** data type—it's type-agnostic. 
 
-**Linked List** — A singly-linked list that works with any data type. Push front/back, pop front/back, insert, remove, get, set. Full control with no type constraints.
+**How it works:**
+- When you push data, you pass a pointer to your value and the size of that type (`sizeof(int)`, `sizeof(float)`, etc.)
+- The container stores a **copy** of your data (not the pointer itself) by using `memcpy()`
+- When you retrieve data, you provide a pointer to where you want the data copied back out
+- The size information you provided tells the container exactly how many bytes to copy
 
-### Vector Examples
+This approach means one set of code can handle integers, floats, structs, or any custom type without code duplication or complex macros.
 
-**Basic Usage with Integers:**
+## Data Structures
 
-```c
-vector_s *vec_ints = NULL;
-vector_init(&vec_ints, sizeof(int));
+### Vector
 
-int x = 42;
-vector_push(vec_ints, &x);
+A **dynamic array** that grows as needed. Access elements by index in O(1) time.
 
-int result;
-vector_get(vec_ints, 0, &result);
-printf("Value: %d\n", result);  // Output: 42
+**Functions:**
+- `vector_init()` — Create a new vector with a given element size
+- `vector_push()` — Add element to the end
+- `vector_pop()` — Remove and retrieve element from the end
+- `vector_insert()` — Insert element at a specific index
+- `vector_remove()` — Remove element at a specific index
+- `vector_get()` — Retrieve element at a specific index
+- `vector_set()` — Update element at a specific index
+- `vector_free()` — Free all memory
 
-vector_free(vec_ints);
-```
+### Linked List
 
-**Working with Floats:**
+A **singly-linked list** that can efficiently insert/remove from both ends.
 
-```c
-vector_s *measurements = NULL;
-vector_init(&measurements, sizeof(float));
+**Functions:**
+- `llist_init()` — Create a new linked list with a given element size
+- `llist_push_front()` — Add element to the front
+- `llist_push_back()` — Add element to the end
+- `llist_pop_front()` — Remove and retrieve element from the front
+- `llist_pop_back()` — Remove and retrieve element from the end
+- `llist_insert()` — Insert element at a specific index
+- `llist_remove()` — Remove element at a specific index
+- `llist_get()` — Retrieve element at a specific index
+- `llist_set()` — Update element at a specific index
+- `llist_free()` — Free all memory
 
-float temp = 98.6f;
-vector_push(measurements, &temp);
+### HashMap
 
-float read_back;
-vector_get(measurements, 0, &read_back);
-printf("Temperature: %.1f°F\n", read_back);
+A **hash table** for fast key-value lookups. Store and retrieve values by key in O(1) average time.
 
-vector_free(measurements);
-```
+**Functions:**
+- `hm_init()` — Create a new hash map with given key size, value size, and bucket count
+- `hm_insert()` — Insert or update a key-value pair
+- `hm_get()` — Retrieve value by key
+- `hm_remove()` — Remove a key-value pair
+- `hm_free()` — Free all memory
 
-**Working with Structs:**
+---
 
-```c
-typedef struct {
-    char name[50];
-    int age;
-} person_t;
+## Examples
 
-vector_s *people = NULL;
-vector_init(&people, sizeof(person_t));
-
-person_t alice = {"Alice", 30};
-vector_push(people, &alice);
-
-person_t person;
-vector_get(people, 0, &person);
-printf("%s is %d years old\n", person.name, person.age);
-
-vector_free(people);
-```
-
-**Modifying and Removing Elements:**
+### Vector
 
 ```c
-vector_s *data = NULL;
-vector_init(&data, sizeof(int));
+// Store integers
+vector_s *vec = NULL;
+vector_init(&vec, sizeof(int));
 
-int vals[] = {1, 2, 4, 5};
+int values[] = {1, 2, 4, 5};
 for (int i = 0; i < 4; i++) {
-    vector_push(data, &vals[i]);
+    vector_push(vec, &values[i]);
 }
 
 // Insert 3 at index 2
 int three = 3;
-vector_insert(data, &three, 2);
+vector_insert(vec, &three, 2);
 
-// Remove element at index 0
-vector_remove(data, 0);
+// Retrieve element
+int result;
+vector_get(vec, 2, &result);  // result = 3
 
-// Pop from the end
-int popped;
-vector_pop(data, &popped);
-
-vector_free(data);
+vector_free(vec);
 ```
 
-### Linked List Examples
+### Linked List
 
 ```c
-// Initialize a linked list for integers
-linked_list_s *list_ints;
-llist_init(&list_ints, sizeof(int));
+// Store floats
+linked_list_s *list = NULL;
+llist_init(&list, sizeof(float));
 
-// Push elements to front and back
-int a = 10, b = 20, c = 30;
-llist_push_back(list_ints, &a);   // [10]
-llist_push_back(list_ints, &b);   // [10, 20]
-llist_push_front(list_ints, &c);  // [30, 10, 20]
+float x = 3.14f, y = 2.71f;
+llist_push_back(list, &x);
+llist_push_back(list, &y);
 
-// Get element at index
-int result;
-llist_get(list_ints, 1, &result);  // result = 10
+// Get element at index 0
+float first;
+llist_get(list, 0, &first);  // first = 3.14f
 
-// Insert at specific position
-int x = 15;
-llist_insert(list_ints, &x, 2);   // [30, 10, 15, 20]
-
-// Remove element at index
-llist_remove(list_ints, 0);       // [10, 15, 20]
-
-// Pop from front/back
-int popped;
-llist_pop_back(list_ints, &popped);   // popped = 20
-llist_pop_front(list_ints, &popped);  // popped = 10
-
-// Clean up
-llist_free(list_ints);
+llist_free(list);
 ```
 
-More data structures coming as we go.
+### HashMap
+
+```c
+// Map string keys to integer values
+hashmap_s *map = NULL;
+hm_init(&map, 10, sizeof(int), sizeof(int), 16);  // key_size=10, value_size=sizeof(int), bucket_count=16
+
+char key1[10] = "count";
+int value1 = 42;
+hm_insert(map, key1, &value1);
+
+// Retrieve value
+int retrieved;
+hm_get(map, key1, &retrieved);  // retrieved = 42
+
+hm_free(map);
+```
+
+---

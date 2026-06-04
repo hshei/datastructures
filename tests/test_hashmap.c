@@ -310,7 +310,75 @@ static void test_collision_remove_all_in_chain(void) {
     PASS();
 }
 
-/* ── 5. Edge / Stress ───────────────────── */
+/* ── 5. Rehashing ──────────────────────── */
+static void test_rehash_triggers_and_preserves_data(void) {
+    TEST("rehash: triggers on load > 0.75, all data preserved");
+    hashmap_s *hm = NULL;
+    /* bucket_count=4, threshold=3 entries, so rehash triggers on 4th insert */
+    hm_init(&hm, sizeof(int), sizeof(int), 4);
+    for (int i = 0; i < 20; i++) {
+        int val = i * 10;
+        CHECK(hm_insert(hm, &i, &val) == DS_OK, "insert failed");
+    }
+    /* bucket_count should have grown past 4 */
+    CHECK(hm->bucket_count > 4, "bucket_count did not grow");
+    CHECK(hm->size == 20, "size wrong after rehash");
+    /* all values must still be retrievable */
+    for (int i = 0; i < 20; i++) {
+        int out = -1;
+        CHECK(hm_get(hm, &i, &out) == DS_OK, "get failed after rehash");
+        CHECK(out == i * 10, "value wrong after rehash");
+    }
+    hm_free(hm);
+    PASS();
+}
+
+static void test_rehash_multiple_times(void) {
+    TEST("rehash: triggers multiple times, data intact");
+    hashmap_s *hm = NULL;
+    hm_init(&hm, sizeof(int), sizeof(int), 2);
+    for (int i = 0; i < 100; i++) {
+        int val = i * 3;
+        CHECK(hm_insert(hm, &i, &val) == DS_OK, "insert failed");
+    }
+    CHECK(hm->bucket_count > 2, "bucket_count did not grow");
+    CHECK(hm->size == 100, "size wrong");
+    for (int i = 0; i < 100; i++) {
+        int out = -1;
+        CHECK(hm_get(hm, &i, &out) == DS_OK, "get failed after multiple rehashes");
+        CHECK(out == i * 3, "value wrong after multiple rehashes");
+    }
+    hm_free(hm);
+    PASS();
+}
+
+static void test_rehash_remove_after_rehash(void) {
+    TEST("rehash: remove works correctly after rehash");
+    hashmap_s *hm = NULL;
+    hm_init(&hm, sizeof(int), sizeof(int), 4);
+    for (int i = 0; i < 20; i++) {
+        int val = i * 5;
+        hm_insert(hm, &i, &val);
+    }
+    /* remove all even keys */
+    for (int i = 0; i < 20; i += 2)
+        CHECK(hm_remove(hm, &i) == DS_OK, "remove after rehash failed");
+    CHECK(hm->size == 10, "size wrong after removes");
+    /* odd keys still present, even keys gone */
+    for (int i = 0; i < 20; i++) {
+        int out = -1;
+        if (i % 2 == 0)
+            CHECK(hm_get(hm, &i, &out) == DS_ERR_NOT_FOUND, "even key still present");
+        else {
+            CHECK(hm_get(hm, &i, &out) == DS_OK, "odd key missing");
+            CHECK(out == i * 5, "odd key value wrong");
+        }
+    }
+    hm_free(hm);
+    PASS();
+}
+
+/* ── 6. Edge / Stress ───────────────────── */
 
 static void test_large_volume(void) {
     TEST("edge: 1000 entries inserted and verified");
@@ -427,6 +495,11 @@ int main(void) {
     printf("\n[ Collisions ]\n");
     test_collision_chaining();
     test_collision_remove_all_in_chain();
+
+    printf("\n[ Rehash ]\n");
+    test_rehash_triggers_and_preserves_data();
+    test_rehash_multiple_times();
+    test_rehash_remove_after_rehash();
 
     printf("\n[ Edge / Stress ]\n");
     test_large_volume();
