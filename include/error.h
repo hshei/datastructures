@@ -7,6 +7,7 @@ typedef enum {
     DS_ERR_OUT_OF_BOUNDS,
     DS_ERR_EMPTY,
     DS_ERR_INVALID_ARGUMENT,
+    DS_ERR_NOT_FOUND,
 } ds_err_t;
 
 const char *ds_err_str(ds_err_t err);

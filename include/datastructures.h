@@ -3,5 +3,6 @@
 
 #include "vector.h"
 #include "linked_list.h"
+#include "hashmap.h"
 #include "error.h"
 #endif // DATASTRUCTURES_H
