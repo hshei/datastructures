@@ -14,6 +14,51 @@ This library uses `void *` (void pointer) to achieve type-generic data structure
 
 This approach means one set of code can handle integers, floats, structs, or any custom type without code duplication or complex macros.
 
+## Getting Started
+
+### Build the Library
+
+```bash
+cd Data\ Structures
+make
+```
+
+This compiles the library and creates object files in the `build/` directory.
+
+### Use in Your Project
+
+1. **Include the header:**
+   ```c
+   #include "datastructures.h"
+   ```
+
+2. **Link against the library:**
+   When compiling your program, link the data structure object files:
+   ```bash
+   gcc your_program.c Data\ Structures/src/vector.c Data\ Structures/src/linked_list.c Data\ Structures/src/hashmap.c -I Data\ Structures/include -o your_program
+   ```
+
+3. **Or use the Makefile:**
+   Add your source file to the Makefile and run `make`.
+
+### Error Handling
+
+All functions return a `ds_err_t` status code:
+- `DS_OK` — Operation succeeded
+- `DS_ERR_ALLOC` — Memory allocation failed
+- `DS_ERR_NOT_FOUND` — Element or key not found
+- `DS_ERR_OUT_OF_BOUNDS` — Index out of bounds
+- `DS_ERR_EMPTY` — Attempted operation on empty container
+- `DS_ERR_INVALID_ARGUMENT` — Invalid argument passed
+
+Use `ds_err_str()` to get a readable error message:
+```c
+ds_err_t err = vector_pop(vec, &result);
+if (err != DS_OK) {
+    fprintf(stderr, "Error: %s\n", ds_err_str(err));
+}
+```
+
 ## Data Structures
 
 ### Vector
