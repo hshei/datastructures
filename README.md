@@ -19,7 +19,7 @@ This approach means one set of code can handle integers, floats, structs, or any
 ### Build the Library
 
 ```bash
-cd Data\ Structures
+cd datastructures
 make
 ```
 
