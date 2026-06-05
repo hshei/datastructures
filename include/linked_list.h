@@ -9,6 +9,7 @@ typedef struct node_s {
 
 typedef struct {
     node_s *head;
+    node_s *tail;
     size_t  size;
     size_t  elem_size;
 } linked_list_s;

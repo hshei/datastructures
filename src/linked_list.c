@@ -13,6 +13,7 @@ ds_err_t llist_init(linked_list_s **llist_out, size_t elem_size){
     }
 
     llist->head = NULL;
+    llist->tail = NULL;
     llist->size = 0;
     llist->elem_size = elem_size;
 
@@ -33,10 +34,14 @@ ds_err_t llist_push_front(linked_list_s *llist, void *element){
         free(new_node);
         return DS_ERR_ALLOC;
     }
-
+    
     memcpy(new_node->data, element, llist->elem_size);
     new_node->next = llist->head;
     llist->head = new_node;
+    if (llist->size == 0) {
+        llist->tail = new_node;
+    }
+
     llist->size += 1;
 
     return DS_OK;
@@ -58,12 +63,12 @@ ds_err_t llist_push_back(linked_list_s *llist, void *element){
     new_node->next = NULL;  
     memcpy(new_node->data, element, llist->elem_size);
 
-    if (llist->head == NULL){
+    if (llist->size == 0){
         llist->head = new_node;
+        llist->tail = new_node;
     } else {
-        node_s *current;
-        for (current=llist->head; current->next != NULL; current=current->next);
-        current->next = new_node;
+        llist->tail->next = new_node;
+        llist->tail = new_node;
     }
 
     llist->size += 1;
@@ -83,6 +88,8 @@ ds_err_t llist_pop_front(linked_list_s *llist, void *element_out){
     free(old_head->data);
     free(old_head);
 
+    if (llist->size == 1) llist->tail = NULL;
+
     llist->size -= 1;
     return DS_OK;
 }
@@ -93,11 +100,12 @@ ds_err_t llist_pop_back(linked_list_s *llist, void *element_out){
         return DS_ERR_EMPTY;
     }   
 
-    if (llist->head->next == NULL){
+    if (llist->size == 1){
         if (element_out != NULL) memcpy(element_out, llist->head->data, llist->elem_size);
         free(llist->head->data);
         free(llist->head);
         llist->head = NULL;
+        llist->tail = NULL;
     } else {
         node_s *current;
         for (current=llist->head; current->next->next!=NULL; current=current->next);
@@ -105,6 +113,7 @@ ds_err_t llist_pop_back(linked_list_s *llist, void *element_out){
         free(current->next->data);
         free(current->next);
         current->next = NULL;
+        llist->tail = current;
     }
 
     llist->size -= 1;

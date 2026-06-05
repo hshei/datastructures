@@ -7,9 +7,12 @@ BUILD = build
 LIB = $(BUILD)/libdatastructures.a
 SRCS = src/vector.c src/error.c src/linked_list.c src/hashmap.c
 OBJS = $(BUILD)/vector.o $(BUILD)/error.o $(BUILD)/linked_list.o $(BUILD)/hashmap.o
-TESTS = $(BUILD)/vector_test $(BUILD)/linked_list_test $(BUILD)/hashmap_test
+TESTS = $(BUILD)/vector_test $(BUILD)/linked_list_test $(BUILD)/hashmap_test $(BUILD)/benchmark
 
-all: $(LIB) $(TESTS)
+all: $(BUILD) $(LIB) $(TESTS)
+
+$(BUILD):
+	mkdir -p $(BUILD)
 
 $(BUILD)/vector.o: src/vector.c include/datastructures.h include/vector.h
 	$(CC) $(CFLAGS) -c src/vector.c -o $(BUILD)/vector.o
@@ -34,6 +37,9 @@ $(BUILD)/linked_list_test: tests/test_linked_list.c $(LIB) include/datastructure
 
 $(BUILD)/hashmap_test: tests/test_hashmap.c $(LIB) include/datastructures.h
 	$(CC) $(CFLAGS) tests/test_hashmap.c -L$(BUILD) -ldatastructures -o $(BUILD)/hashmap_test
+
+$(BUILD)/benchmark: tests/benchmark.c $(LIB) include/datastructures.h
+	$(CC) $(CFLAGS) tests/benchmark.c -L$(BUILD) -ldatastructures -o $(BUILD)/benchmark
 
 clean:
 	rm -rf $(BUILD)/*
