@@ -1,6 +1,7 @@
 #include "vector.h"
 #include "linked_list.h"
 #include "hashmap.h"
+#include "hashset.h"
 #include "error.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -293,6 +294,74 @@ static void bench_hashmap(void) {
 }
 
 /* ═══════════════════════════════════════════
+   HASHSET BENCHMARKS
+═══════════════════════════════════════════ */
+
+static void bench_hashset_at_size(size_t n, size_t bucket_count) {
+    hashset_s *hs = NULL;
+    hs_init(&hs, sizeof(int), bucket_count);
+
+    char label[64];
+
+    /* insert */
+    snprintf(label, sizeof(label), "insert x%zu (buckets=%zu)", n, bucket_count);
+    BENCH(label, n, {
+        for (int i = 0; i < (int)n; i++)
+            hs_insert(hs, &i);
+    });
+
+    /* contains (hits) */
+    snprintf(label, sizeof(label), "contains (hit) x%zu (buckets=%zu)", n, bucket_count);
+    BENCH(label, n, {
+        int result;
+        for (int i = 0; i < (int)n; i++)
+            hs_contains(hs, &i, &result);
+    });
+
+    /* contains (misses) */
+    snprintf(label, sizeof(label), "contains (miss) x%zu (buckets=%zu)", n, bucket_count);
+    BENCH(label, n, {
+        int result;
+        for (int i = (int)n; i < (int)(n * 2); i++)
+            hs_contains(hs, &i, &result);
+    });
+
+    /* remove */
+    snprintf(label, sizeof(label), "remove x%zu (buckets=%zu)", n, bucket_count);
+    BENCH(label, n, {
+        for (int i = 0; i < (int)n; i++)
+            hs_remove(hs, &i);
+    });
+
+    hs_free(hs);
+}
+
+static void bench_hashset(void) {
+    printf("\n[ Hashset ]\n");
+    printf("  --- 1k entries ---\n");
+    bench_hashset_at_size(SMALL, 16);
+
+    printf("  --- 10k entries ---\n");
+    bench_hashset_at_size(MEDIUM, 16);
+
+    printf("  --- 100k entries ---\n");
+    bench_hashset_at_size(LARGE, 16);
+
+    printf("\n  --- duplicate insert stress ---\n");
+    {
+        hashset_s *hs = NULL;
+        hs_init(&hs, sizeof(int), 16);
+        int key = 42;
+        BENCH("insert same key x100k", LARGE, {
+            for (int i = 0; i < LARGE; i++)
+                hs_insert(hs, &key);
+        });
+        printf("  %-55s %11zu\n", "final size (should be 1)", hs->size);
+        hs_free(hs);
+    }
+}
+
+/* ═══════════════════════════════════════════
    MAIN
 ═══════════════════════════════════════════ */
 
@@ -307,6 +376,7 @@ int main(void) {
     bench_linked_list();
     bench_head_to_head();
     bench_hashmap();
+    bench_hashset();
 
     printf("\n");
     return 0;

@@ -110,6 +110,22 @@ A **hash table** for fast key-value lookups. Store and retrieve values by key in
 - `hm_remove()` — Remove a key-value pair
 - `hm_free()` — Free all memory
 
+HashSet ￼
+
+A hash set for fast membership checks. Store unique keys with O(1) average insert, lookup, and remove.
+
+Functions:
+
+- `hs_init()` — Create a new hash set with given key size and bucket count
+
+- `hs_insert()` — Add a key (duplicates are ignored)
+
+- `hs_contains()` — Check if a key exists
+
+- `hs_remove()` — Remove a key
+
+- `hs_free()` — Free all memory
+
 ---
 
 ## Examples
@@ -173,6 +189,30 @@ hm_get(map, key1, &retrieved);  // retrieved = 42
 hm_free(map);
 ```
 
+### HashSet ￼
+
+```c
+// Track unique visitor IDs
+hashset_s *visitors = NULL;
+hs_init(&visitors, sizeof(int), 16);
+
+int id1 = 101, id2 = 202, id3 = 101;
+hs_insert(visitors, &id1);
+hs_insert(visitors, &id2);
+hs_insert(visitors, &id3);  // duplicate, ignored
+
+int exists;
+hs_contains(visitors, &id1, &exists);  // exists = 1
+hs_contains(visitors, &(int){999}, &exists);  // exists = 0
+
+// visitors->size == 2
+
+hs_free(visitors);
+
+```
+
+
+
 ---
 
 ## Performance Benchmarks
@@ -232,4 +272,33 @@ insert x100k (fixed=128)                                      3.853ms
 insert x100k (fixed=16, rehash)                               4.544ms
 final bucket_count                                           262144
 ```
+
+### Hashset ￼
+
+```
+--- 1k entries ---
+insert x1000 (buckets=16)                                  0.038 ms  (1000 ops)
+contains (hit) x1000 (buckets=16)                          0.006 ms  (1000 ops)
+contains (miss) x1000 (buckets=16)                         0.005 ms  (1000 ops)
+remove x1000 (buckets=16)                                  0.021 ms  (1000 ops)
+
+--- 10k entries ---
+insert x10000 (buckets=16)                                 0.258 ms  (10000 ops)
+contains (hit) x10000 (buckets=16)                         0.054 ms  (10000 ops)
+contains (miss) x10000 (buckets=16)                        0.047 ms  (10000 ops)
+remove x10000 (buckets=16)                                 0.176 ms  (10000 ops)
+
+--- 100k entries ---
+insert x100000 (buckets=16)                                3.401 ms  (100000 ops)
+contains (hit) x100000 (buckets=16)                        1.024 ms  (100000 ops)
+contains (miss) x100000 (buckets=16)                       0.615 ms  (100000 ops)
+remove x100000 (buckets=16)                                2.905 ms  (100000 ops)
+
+--- duplicate insert stress ---
+insert same key x100k                                      0.363 ms  (100000 ops)
+final size (should be 1)                                          1
+
+```
+
+
 

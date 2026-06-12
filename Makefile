@@ -5,9 +5,9 @@ ARFLAGS = rcs
 
 BUILD = build
 LIB = $(BUILD)/libdatastructures.a
-SRCS = src/vector.c src/error.c src/linked_list.c src/hashmap.c
-OBJS = $(BUILD)/vector.o $(BUILD)/error.o $(BUILD)/linked_list.o $(BUILD)/hashmap.o
-TESTS = $(BUILD)/vector_test $(BUILD)/linked_list_test $(BUILD)/hashmap_test $(BUILD)/benchmark
+SRCS = src/vector.c src/error.c src/linked_list.c src/hashmap.c src/hashset.c
+OBJS = $(BUILD)/vector.o $(BUILD)/error.o $(BUILD)/linked_list.o $(BUILD)/hashmap.o $(BUILD)/hashset.o
+TESTS = $(BUILD)/vector_test $(BUILD)/linked_list_test $(BUILD)/hashmap_test $(BUILD)/hashset_test $(BUILD)/benchmark
 
 all: $(BUILD) $(LIB) $(TESTS)
 
@@ -26,6 +26,9 @@ $(BUILD)/linked_list.o: src/linked_list.c include/datastructures.h include/linke
 $(BUILD)/hashmap.o: src/hashmap.c include/datastructures.h include/hashmap.h
 	$(CC) $(CFLAGS) -c src/hashmap.c -o $(BUILD)/hashmap.o
 
+$(BUILD)/hashset.o: src/hashset.c include/datastructures.h include/hashset.h
+	$(CC) $(CFLAGS) -c src/hashset.c -o $(BUILD)/hashset.o
+
 $(LIB): $(OBJS)
 	$(AR) $(ARFLAGS) $(LIB) $(OBJS)
 
@@ -37,6 +40,9 @@ $(BUILD)/linked_list_test: tests/test_linked_list.c $(LIB) include/datastructure
 
 $(BUILD)/hashmap_test: tests/test_hashmap.c $(LIB) include/datastructures.h
 	$(CC) $(CFLAGS) tests/test_hashmap.c -L$(BUILD) -ldatastructures -o $(BUILD)/hashmap_test
+
+$(BUILD)/hashset_test: tests/test_hashset.c $(LIB) include/datastructures.h
+	$(CC) $(CFLAGS) tests/test_hashset.c -L$(BUILD) -ldatastructures -o $(BUILD)/hashset_test
 
 $(BUILD)/benchmark: tests/benchmark.c $(LIB) include/datastructures.h
 	$(CC) $(CFLAGS) tests/benchmark.c -L$(BUILD) -ldatastructures -o $(BUILD)/benchmark
