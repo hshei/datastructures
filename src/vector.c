@@ -7,17 +7,13 @@
 // Initalizing new vector
 ds_err_t vector_init(vector_s **vector_out, size_t elem_size){
     vector_s *vector;
-    if ((vector = calloc(1, sizeof(vector_s))) == NULL){  
-        fprintf(stderr, "Failed to Allocate Memory for Vector Data...");
-        return DS_ERR_ALLOC;
-    }
+    if ((vector = calloc(1, sizeof(vector_s))) == NULL)  return DS_ERR_ALLOC;
 
     vector->elem_size = elem_size;
     vector->size = 0;
     vector->capacity = 16;
 
     if ((vector->data = calloc(vector->capacity, vector->elem_size)) == NULL){
-        fprintf(stderr, "Failed to Allocate Memory for Vector Data...");
         free(vector); 
         return DS_ERR_ALLOC;
     }
@@ -41,10 +37,7 @@ ds_err_t vector_push(vector_s *vector, void *element){
         size_t new_capacity = vector->capacity + (vector->capacity / 2); 
         void *tmp = realloc(vector->data, new_capacity * vector->elem_size);
 
-        if (tmp == NULL){
-            fprintf(stderr, "Failed to Reallocate Memory for Vector...");
-            return DS_ERR_ALLOC;
-        }
+        if (tmp == NULL) return DS_ERR_ALLOC;
 
         vector->data = tmp;
         vector->capacity = new_capacity;
@@ -63,25 +56,21 @@ ds_err_t vector_push(vector_s *vector, void *element){
 
 // Popping from the end of the vector
 ds_err_t vector_pop(vector_s *vector, void *element_out){
-    if (vector->size == 0){
-        fprintf(stderr, "This vector does not have any elements");
-        return DS_ERR_EMPTY;
-    }
+    if (vector->size == 0) return DS_ERR_EMPTY;
+    
     vector->size -= 1;
 
     char *base = (char *)vector->data;
     char *element = base + vector->size * vector->elem_size;
     
-    memcpy(element_out, element, vector->elem_size);    
+    if (element_out != NULL) memcpy(element_out, element, vector->elem_size);    
     return DS_OK;
 }
 
 // Setting (updating) the element at certain index
 ds_err_t vector_set(vector_s *vector, void *element, size_t index){
-    if (index >= vector->size){
-        fprintf(stderr, "Invalid Index, the current size of the vector is %zu\n", vector->size);
-        return DS_ERR_OUT_OF_BOUNDS;
-    }   
+    if (index >= vector->size) return DS_ERR_OUT_OF_BOUNDS;
+       
 
     char *base = (char *)vector->data;
     char *old_element = base + index * vector->elem_size;
@@ -92,19 +81,13 @@ ds_err_t vector_set(vector_s *vector, void *element, size_t index){
 
 // Inserting a new element at a certain index
 ds_err_t vector_insert(vector_s *vector, void *element, size_t index){
-    if (index > vector->size){
-        fprintf(stderr, "Invalid Index, the current size of the vector is %zu\n", vector->size);
-        return DS_ERR_OUT_OF_BOUNDS;
-    }
+    if (index > vector->size) return DS_ERR_OUT_OF_BOUNDS;
 
     if (vector->size >= vector->capacity){
         size_t new_capacity = vector->capacity + (vector->capacity / 2);
         void *tmp = realloc(vector->data, new_capacity * vector->elem_size);
 
-        if (tmp == NULL){
-            fprintf(stderr, "Failed to Reallocate Memory for Vector...");
-            return DS_ERR_ALLOC;
-        }
+        if (tmp == NULL) return DS_ERR_ALLOC;
         
         vector->data = tmp;
         vector->capacity = new_capacity;
@@ -131,11 +114,8 @@ ds_err_t vector_insert(vector_s *vector, void *element, size_t index){
 }
 
 // Getting the value of certain index, without modifying the vector
-ds_err_t vector_get(vector_s *vector, size_t index, void *element_out){
-    if (index >= vector->size){
-        fprintf(stderr, "Invalid Index, the current size of the vector is %zu\n", vector->size);
-        return DS_ERR_OUT_OF_BOUNDS;
-    }
+ds_err_t vector_get(const vector_s *vector, size_t index, void *element_out){
+    if (index >= vector->size) return DS_ERR_OUT_OF_BOUNDS;
 
     char *base = (char *)vector->data;
     char *element = base + index * vector->elem_size;
@@ -146,10 +126,7 @@ ds_err_t vector_get(vector_s *vector, size_t index, void *element_out){
 
 // Removing an element at a certain index
 ds_err_t vector_remove(vector_s *vector, size_t index){
-    if (index >= vector->size){
-        fprintf(stderr, "Invalid Index, the current size of the vector is %zu\n", vector->size);
-        return DS_ERR_OUT_OF_BOUNDS;
-    }
+    if (index >= vector->size) return DS_ERR_OUT_OF_BOUNDS;
 
     char *base = (char *)vector->data;
     char *index_element = base + index * vector->elem_size;

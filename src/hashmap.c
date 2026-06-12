@@ -54,18 +54,29 @@ ds_err_t hm_init(hashmap_s **hm_out, size_t key_size, size_t value_size, size_t 
 
 ds_err_t hm_insert(hashmap_s *hm, void *key, void *value){
     size_t index = hash(key, hm->key_size, hm->bucket_count);
-
+    
+    // Checking to see if the key already has a value
+    for (hm_entry_s *temp = hm->buckets[index]; temp != NULL; temp = temp->next){
+        if (memcmp(key, temp->key, hm->key_size) == 0){
+            // it already exists, so update the value
+            memcpy(temp->value, value, hm->value_size);
+            return DS_OK;
+        }
+    }
+    
+    // it doesn't exist, so create a new entry
     hm_entry_s *new_entry;
     if ((new_entry = calloc(1, sizeof(hm_entry_s))) == NULL) return DS_ERR_ALLOC;
     if ((new_entry->key = calloc(1, hm->key_size)) == NULL){
         free(new_entry);
         return DS_ERR_ALLOC;
-     }
+        }
     if ((new_entry->value = calloc(1, hm->value_size)) == NULL){ 
         free(new_entry->key);
         free(new_entry);
         return DS_ERR_ALLOC;
     }
+    
     memcpy(new_entry->key, key, hm->key_size);
     memcpy(new_entry->value, value, hm->value_size);
 
@@ -81,7 +92,7 @@ ds_err_t hm_insert(hashmap_s *hm, void *key, void *value){
     return DS_OK;
 }
 
-ds_err_t hm_get(hashmap_s *hm, void *key, void *value_out){
+ds_err_t hm_get(const hashmap_s *hm, void *key, void *value_out){
     size_t index = hash(key, hm->key_size, hm->bucket_count);
 
     hm_entry_s *entry;
@@ -118,6 +129,8 @@ ds_err_t hm_remove(hashmap_s *hm, void *key){
 }
 
 ds_err_t hm_free(hashmap_s *hm){
+    if (hm == NULL) return DS_OK;
+
     hm_entry_s *entry, *next_entry;
     for (size_t i =0; i < hm->bucket_count; i++){
         entry=hm->buckets[i];
@@ -130,6 +143,7 @@ ds_err_t hm_free(hashmap_s *hm){
             entry = next_entry;
         }
     }
+    
     free(hm->buckets);
     free(hm);
     return DS_OK;

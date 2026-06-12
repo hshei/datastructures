@@ -160,7 +160,7 @@ llist_free(list);
 ```c
 // Map string keys to integer values
 hashmap_s *map = NULL;
-hm_init(&map, 10, sizeof(int), sizeof(int), 16);  // key_size=10, value_size=sizeof(int), bucket_count=16
+hm_init(&map, sizeof(int), sizeof(int), 16);  // key_size=10, value_size=sizeof(int), bucket_count=16
 
 char key1[10] = "count";
 int value1 = 42;

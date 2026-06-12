@@ -146,20 +146,20 @@ static void test_insert_person_value(void) {
 }
 
 static void test_insert_duplicate_key(void) {
-    TEST("insert/get: duplicate key inserts both, get returns first");
+    TEST("insert/get: duplicate key updates value in place");
     hashmap_s *hm = NULL;
     hm_init(&hm, sizeof(int), sizeof(int), 16);
     int key = 1, val1 = 10, val2 = 20;
     hm_insert(hm, &key, &val1);
     hm_insert(hm, &key, &val2);
-    CHECK(hm->size == 2, "size != 2");
-    /* get returns the most recently inserted (front of chain) */
+    CHECK(hm->size == 1, "size should still be 1");
     int out = 0;
     hm_get(hm, &key, &out);
-    CHECK(out == val2, "expected most recent value");
+    CHECK(out == val2, "expected updated value");
     hm_free(hm);
     PASS();
 }
+
 
 static void test_get_missing_key(void) {
     TEST("get: missing key returns DS_ERR_NOT_FOUND");

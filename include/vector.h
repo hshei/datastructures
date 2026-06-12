@@ -18,7 +18,7 @@ ds_err_t vector_push(vector_s *vector, void *element);
 ds_err_t vector_pop(vector_s *vector, void *element_out);
 ds_err_t vector_set(vector_s *vector, void *element, size_t index);
 ds_err_t vector_insert(vector_s *vector, void *element, size_t index);
-ds_err_t vector_get(vector_s *vector, size_t index, void *element_out);
+ds_err_t vector_get(const vector_s *vector, size_t index, void *element_out);
 ds_err_t vector_remove(vector_s *vector, size_t index);
 ds_err_t vector_free(vector_s *vector);
 

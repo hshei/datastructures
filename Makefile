@@ -41,5 +41,7 @@ $(BUILD)/hashmap_test: tests/test_hashmap.c $(LIB) include/datastructures.h
 $(BUILD)/benchmark: tests/benchmark.c $(LIB) include/datastructures.h
 	$(CC) $(CFLAGS) tests/benchmark.c -L$(BUILD) -ldatastructures -o $(BUILD)/benchmark
 
+.PHONY: all clean
+
 clean:
-	rm -rf $(BUILD)/*
+	rm -rf $(BUILD)

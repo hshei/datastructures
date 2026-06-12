@@ -120,11 +120,8 @@ ds_err_t llist_pop_back(linked_list_s *llist, void *element_out){
     return DS_OK;
 }
 
-ds_err_t llist_get(linked_list_s *llist, size_t index, void *element_out){
-    if (index >= llist->size){
-        fprintf(stderr, "Invalid Index, The Size of the Linked List is %zu", llist->size);
-        return DS_ERR_OUT_OF_BOUNDS;
-    }
+ds_err_t llist_get(const linked_list_s *llist, size_t index, void *element_out){
+    if (index >= llist->size) return DS_ERR_OUT_OF_BOUNDS;
 
     node_s *current;
     size_t i;
@@ -135,10 +132,7 @@ ds_err_t llist_get(linked_list_s *llist, size_t index, void *element_out){
 }
 
 ds_err_t llist_set(linked_list_s *llist, void *element, size_t index){
-    if (index >= llist->size){
-        fprintf(stderr, "Invalid Index, The Size of the Linked List is %zu", llist->size);
-        return DS_ERR_OUT_OF_BOUNDS;
-    }
+    if (index >= llist->size) return DS_ERR_OUT_OF_BOUNDS;
 
     node_s *current;
     size_t i;
@@ -149,22 +143,15 @@ ds_err_t llist_set(linked_list_s *llist, void *element, size_t index){
 }
 
 ds_err_t llist_insert(linked_list_s *llist, void *element, size_t index){
-    if (index > llist->size){
-        fprintf(stderr, "Invalid Index, The Size of the Linked List is %zu", llist->size);
-        return DS_ERR_OUT_OF_BOUNDS;
-    }
+    if (index > llist->size) return DS_ERR_OUT_OF_BOUNDS;
 
     if (index == 0) return llist_push_front(llist, element);
     if (index == llist->size) return llist_push_back(llist, element);
     
     node_s *new_node;
-    if ((new_node = calloc(1, sizeof(node_s))) == NULL){
-        fprintf(stderr, "Failed to Allocate Memory for New Node...");
-        return DS_ERR_ALLOC;
-    }
+    if ((new_node = calloc(1, sizeof(node_s))) == NULL) return DS_ERR_ALLOC;
 
     if ((new_node->data = calloc(1, llist->elem_size)) == NULL){
-        fprintf(stderr, "Failed to Allocate Memory for New Node...");
         free(new_node);
         return DS_ERR_ALLOC;
     }
@@ -182,10 +169,7 @@ ds_err_t llist_insert(linked_list_s *llist, void *element, size_t index){
 }
 
 ds_err_t llist_remove(linked_list_s *llist, size_t index){
-    if (index >= llist->size){
-        fprintf(stderr, "Invalid Index, The Size of the Linked List is %zu", llist->size);
-        return DS_ERR_OUT_OF_BOUNDS;
-    }
+    if (index >= llist->size) return DS_ERR_OUT_OF_BOUNDS;
 
     if (index == 0) return llist_pop_front(llist, NULL);
     if (index == llist->size - 1) return llist_pop_back(llist, NULL);
@@ -193,7 +177,7 @@ ds_err_t llist_remove(linked_list_s *llist, size_t index){
     node_s *current;
     size_t i;
     for (i=0,current=llist->head;i<index-1;i++,current=current->next);
-    // hi there this is
+
     node_s *to_remove = current->next;
     current->next = to_remove->next;
     free(to_remove->data);
@@ -204,14 +188,16 @@ ds_err_t llist_remove(linked_list_s *llist, size_t index){
 }
 
 ds_err_t llist_free(linked_list_s *llist){
-   node_s *current = llist->head;
-   node_s *next;
-   while (current != NULL){
-    next = current->next;
-    free(current->data);
-    free(current);
-    current = next;
-   }
-   free(llist);
-   return DS_OK;
+    if (llist == NULL) return DS_OK;
+    
+    node_s *current = llist->head;
+    node_s *next;
+    while (current != NULL){
+        next = current->next;
+        free(current->data);
+        free(current);
+        current = next;
+    }
+    free(llist);
+    return DS_OK;
 }

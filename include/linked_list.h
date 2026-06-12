@@ -1,5 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef LINKED_LIST_H
+#define LINKED_LIST_H
+
+#include <stddef.h>
 #include "error.h"
 
 typedef struct node_s {
@@ -20,8 +22,10 @@ ds_err_t llist_push_front(linked_list_s *llist, void *element);
 ds_err_t llist_push_back(linked_list_s *llist, void *element);
 ds_err_t llist_pop_front(linked_list_s *llist, void *element_out);
 ds_err_t llist_pop_back(linked_list_s *llist, void *element_out);
-ds_err_t llist_get(linked_list_s *llist, size_t index, void *element_out);
+ds_err_t llist_get(const linked_list_s *llist, size_t index, void *element_out);
 ds_err_t llist_set(linked_list_s *llist, void *element, size_t index);
 ds_err_t llist_insert(linked_list_s *llist, void *element, size_t index);
 ds_err_t llist_remove(linked_list_s *llist, size_t index);
 ds_err_t llist_free(linked_list_s *llist);
+
+#endif // LINKED_LIST_H
