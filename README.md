@@ -129,6 +129,61 @@ Functions:
 
 ---
 
+## Iteration ￼
+
+All four data structures support a `foreach` function that applies a user-provided callback to each element. The callback receives a `void *user_data` argument for accumulating results.
+
+```c
+// Vector/Linked List callback signature
+typedef void (*vector_foreach_fn)(const void *element, size_t index, void *user_data);
+typedef void (*llist_foreach_fn)(const void *element, size_t index, void *user_data);
+
+// HashMap callback signature
+typedef void (*hm_foreach_fn)(const void *key, const void *value, void *user_data);
+
+// HashSet callback signature
+typedef void (*hs_foreach_fn)(const void *key, void *user_data);
+
+```
+
+Example — sum all elements in a vector:
+
+```c
+void sum_ints(const void *element, size_t index, void *user_data) {
+    (void)index;
+    int *sum = user_data;
+    *sum += *(const int *)element;
+}
+
+vector_s *vec = NULL;
+vector_init(&vec, sizeof(int));
+for (int i = 1; i <= 5; i++)
+    vector_push(vec, &i);
+
+int total = 0;
+vector_foreach(vec, sum_ints, &total);  // total = 15
+
+vector_free(vec);
+
+```
+
+Example — collect all keys from a hashset into a vector:
+
+```c
+hashset_s *hs = NULL;
+hs_init(&hs, sizeof(int), 16);
+for (int i = 0; i < 5; i++)
+    hs_insert(hs, &i);
+
+vector_s *keys = NULL;
+vector_init(&keys, sizeof(int));
+hs_get_keys(hs, keys);  // keys->size == 5
+
+vector_free(keys);
+hs_free(hs);
+
+```
+
 ## Examples
 
 ### Vector
