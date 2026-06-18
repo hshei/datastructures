@@ -79,6 +79,7 @@ A **dynamic array** that grows as needed. Access elements by index in O(1) time.
 - `vector_remove()` — Remove element at a specific index
 - `vector_get()` — Retrieve element at a specific index
 - `vector_set()` — Update element at a specific index
+- `vector_foreach()` — Apply a function to each element (with index)
 - `vector_free()` — Free all memory
 
 ### Linked List
@@ -96,6 +97,7 @@ A **singly-linked list** that can efficiently insert/remove from both ends.
 - `llist_remove()` — Remove element at a specific index
 - `llist_get()` — Retrieve element at a specific index
 - `llist_set()` — Update element at a specific index
+- `llist_foreach()` — Apply a function to each element (with index)
 - `llist_free()` — Free all memory
 
 ### HashMap
@@ -108,6 +110,7 @@ A **hash table** for fast key-value lookups. Store and retrieve values by key in
 - `hm_insert()` — Insert or update a key-value pair
 - `hm_get()` — Retrieve value by key
 - `hm_remove()` — Remove a key-value pair
+- `hm_foreach()` — Apply a function to each key-value pair
 - `hm_free()` — Free all memory
 
 HashSet ￼
@@ -117,13 +120,11 @@ A hash set for fast membership checks. Store unique keys with O(1) average inser
 Functions:
 
 - `hs_init()` — Create a new hash set with given key size and bucket count
-
 - `hs_insert()` — Add a key (duplicates are ignored)
-
 - `hs_contains()` — Check if a key exists
-
 - `hs_remove()` — Remove a key
-
+- `hs_foreach()` — Apply a function to each key
+- `hs_get_keys()` — Collect all keys into a vector
 - `hs_free()` — Free all memory
 
 ---
