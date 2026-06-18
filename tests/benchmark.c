@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <stdbool.h>
 
 /* ─────────────────────────────────────────────
    Timer helpers
@@ -313,7 +314,7 @@ static void bench_hashset_at_size(size_t n, size_t bucket_count) {
     /* contains (hits) */
     snprintf(label, sizeof(label), "contains (hit) x%zu (buckets=%zu)", n, bucket_count);
     BENCH(label, n, {
-        int result;
+        bool result;
         for (int i = 0; i < (int)n; i++)
             hs_contains(hs, &i, &result);
     });
@@ -321,7 +322,7 @@ static void bench_hashset_at_size(size_t n, size_t bucket_count) {
     /* contains (misses) */
     snprintf(label, sizeof(label), "contains (miss) x%zu (buckets=%zu)", n, bucket_count);
     BENCH(label, n, {
-        int result;
+        bool result;
         for (int i = (int)n; i < (int)(n * 2); i++)
             hs_contains(hs, &i, &result);
     });

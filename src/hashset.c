@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include "hashset.h"
 #include "error.h"
 
-// djb2
+// djb2 hash function, change this to any function you like 
 static size_t hash(const void *key, size_t key_size, size_t bucket_count){
     const unsigned char *bytes = (const unsigned char *)key;
     size_t h = 5381;
@@ -13,7 +14,7 @@ static size_t hash(const void *key, size_t key_size, size_t bucket_count){
     return h % bucket_count;
 }
 
-
+// expanding the set so that it keeps an average of O(1) lookup time
 static ds_err_t hs_rehash(hashset_s *hs){
     size_t new_count = hs->bucket_count * 2;
     hs_entry_s **new_bucket;
@@ -36,6 +37,7 @@ static ds_err_t hs_rehash(hashset_s *hs){
     return DS_OK;
 }
 
+// initlializing the set
 ds_err_t hs_init(hashset_s **hs_out, size_t key_size, size_t bucket_count){
     hashset_s *hs;
     if ((hs = calloc(1, sizeof(hashset_s))) == NULL) return DS_ERR_ALLOC;
@@ -52,6 +54,7 @@ ds_err_t hs_init(hashset_s **hs_out, size_t key_size, size_t bucket_count){
     return DS_OK;
 }
 
+// adding an entry to the set
 ds_err_t hs_insert(hashset_s *hs, void *key){
     size_t index = hash(key, hs->key_size, hs->bucket_count);
 
@@ -80,19 +83,48 @@ ds_err_t hs_insert(hashset_s *hs, void *key){
     return DS_OK;
 }
 
-ds_err_t hs_contains(hashset_s *hs, void *key, int *result){
+// checks whether a key is in the set
+ds_err_t hs_contains(hashset_s *hs, void *key, bool *result){
     size_t index = hash(key, hs->key_size, hs->bucket_count);
     for (hs_entry_s *temp = hs->buckets[index]; temp != NULL; temp = temp->next){
         if (memcmp(temp->key, key, hs->key_size) == 0) {
-            *result = 1;
+            *result = true;
             return DS_OK;
         }
     }
-    *result = 0;
+    *result = false;
     return DS_OK;
 }
 
+// apply a function on every element in the set
+ds_err_t hs_foreach(hashset_s *hs, hs_foreach_fn fn, void *user_data){
+    if ((hs == NULL) || (fn == NULL)) return DS_ERR_INVALID_ARGUMENT;
 
+    for (size_t i = 0; i < hs->bucket_count; i++){
+        hs_entry_s *entry = hs->buckets[i];
+        while (entry){
+            fn(entry->key, user_data);
+            entry = entry->next;
+        }
+    }
+    return DS_OK;
+}
+
+// keys as a vector
+ds_err_t hs_get_keys(hashset_s *hs, vector_s *vector_out){
+    if ((hs == NULL) || (vector_out == NULL)) return DS_ERR_INVALID_ARGUMENT;
+
+    for (size_t i = 0; i < hs->bucket_count; i++){
+        hs_entry_s *entry = hs->buckets[i];
+        while (entry){
+            vector_push(vector_out, entry->key);
+            entry = entry->next;
+        }
+    }
+    return DS_OK;
+}
+
+// remove an entry from the set
 ds_err_t hs_remove(hashset_s *hs, void *key){
     size_t index = hash(key, hs->key_size, hs->bucket_count);
 
@@ -115,6 +147,7 @@ ds_err_t hs_remove(hashset_s *hs, void *key){
     return DS_ERR_NOT_FOUND;
 }
 
+// freeing the memory allocated by the set
 ds_err_t hs_free(hashset_s *hs){
     if (hs == NULL) return DS_OK;
 

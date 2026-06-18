@@ -18,10 +18,13 @@ typedef struct {
     size_t       value_size;
 } hashmap_s;
 
-// Function declarations
+typedef void (*hm_foreach_fn)(const void *key, const void *value, void *user_data);
+
+
 ds_err_t hm_init(hashmap_s **hm_out, size_t key_size, size_t value_size, size_t bucket_count);
 ds_err_t hm_insert(hashmap_s *hm, void *key, void *value);
 ds_err_t hm_get(const hashmap_s *hm, void *key, void *value_out);
+ds_err_t hm_foreach(hashmap_s *hm, hm_foreach_fn fn, void *user_data);
 ds_err_t hm_remove(hashmap_s *hm, void *key);
 ds_err_t hm_free(hashmap_s *hm);
 

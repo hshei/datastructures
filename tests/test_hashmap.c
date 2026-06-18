@@ -463,6 +463,91 @@ static void test_free_with_collisions(void) {
     PASS();
 }
 
+/* ── Foreach ────────────────────────────── */
+
+static void hm_sum_values_callback(const void *key, const void *value, void *user_data) {
+    (void)key;
+    int *sum = user_data;
+    *sum += *(const int *)value;
+}
+
+static int hm_call_count = 0;
+static void hm_count_callback(const void *key, const void *value, void *user_data) {
+    (void)key; (void)value; (void)user_data;
+    hm_call_count++;
+}
+
+static void test_hm_foreach_basic(void) {
+    TEST("foreach: visits all entries, value sum matches");
+    hashmap_s *hm = NULL;
+    hm_init(&hm, sizeof(int), sizeof(int), 16);
+    int expected = 0;
+    for (int i = 0; i < 10; i++) {
+        int val = i * 10;
+        hm_insert(hm, &i, &val);
+        expected += val;
+    }
+    int sum = 0;
+    CHECK(hm_foreach(hm, hm_sum_values_callback, &sum) == DS_OK, "foreach failed");
+    CHECK(sum == expected, "value sum mismatch");
+    hm_free(hm);
+    PASS();
+}
+
+static void test_hm_foreach_empty(void) {
+    TEST("foreach: empty hashmap, callback never called");
+    hashmap_s *hm = NULL;
+    hm_init(&hm, sizeof(int), sizeof(int), 16);
+    hm_call_count = 0;
+    CHECK(hm_foreach(hm, hm_count_callback, NULL) == DS_OK, "foreach failed");
+    CHECK(hm_call_count == 0, "callback called on empty map");
+    hm_free(hm);
+    PASS();
+}
+
+static void test_hm_foreach_count(void) {
+    TEST("foreach: callback called exactly size times");
+    hashmap_s *hm = NULL;
+    hm_init(&hm, sizeof(int), sizeof(int), 16);
+    for (int i = 0; i < 20; i++) {
+        int val = i;
+        hm_insert(hm, &i, &val);
+    }
+    hm_call_count = 0;
+    hm_foreach(hm, hm_count_callback, NULL);
+    CHECK(hm_call_count == 20, "call count != size");
+    hm_free(hm);
+    PASS();
+}
+
+static void test_hm_foreach_with_collisions(void) {
+    TEST("foreach: single bucket, all entries visited");
+    hashmap_s *hm = NULL;
+    hm_init(&hm, sizeof(int), sizeof(int), 1);
+    int expected = 0;
+    for (int i = 0; i < 10; i++) {
+        int val = i;
+        hm_insert(hm, &i, &val);
+        expected += val;
+    }
+    int sum = 0;
+    hm_foreach(hm, hm_sum_values_callback, &sum);
+    CHECK(sum == expected, "sum mismatch with collisions");
+    hm_free(hm);
+    PASS();
+}
+
+static void test_hm_foreach_null_args(void) {
+    TEST("foreach: NULL args return error");
+    hashmap_s *hm = NULL;
+    hm_init(&hm, sizeof(int), sizeof(int), 16);
+    CHECK(hm_foreach(NULL, hm_count_callback, NULL) == DS_ERR_INVALID_ARGUMENT, "NULL hm not caught");
+    CHECK(hm_foreach(hm, NULL, NULL) == DS_ERR_INVALID_ARGUMENT, "NULL fn not caught");
+    hm_free(hm);
+    PASS();
+}
+
+
 /* ═══════════════════════════════════════════
    MAIN
 ═══════════════════════════════════════════ */
@@ -507,6 +592,13 @@ int main(void) {
     test_single_bucket_insert_get_remove();
     test_point_key_person_value();
     test_free_with_collisions();
+
+    printf("\n[ Foreach ]\n");
+    test_hm_foreach_basic();
+    test_hm_foreach_empty();
+    test_hm_foreach_count();
+    test_hm_foreach_with_collisions();
+    test_hm_foreach_null_args();
 
     printf("\n═══════════════════════════════════════════\n");
     printf("Results: %d / %d passed\n\n", tests_passed, tests_run);

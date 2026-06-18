@@ -299,6 +299,3 @@ insert same key x100k                                      0.363 ms  (100000 ops
 final size (should be 1)                                          1
 
 ```
-
-
-

@@ -105,6 +105,19 @@ ds_err_t hm_get(const hashmap_s *hm, void *key, void *value_out){
     return DS_ERR_NOT_FOUND;
 }
 
+ds_err_t hm_foreach(hashmap_s *hm, hm_foreach_fn fn, void *user_data){
+    if ((hm == NULL) || (fn == NULL)) return DS_ERR_INVALID_ARGUMENT;
+
+    for (size_t i = 0; i < hm->bucket_count; i++){
+        hm_entry_s *entry = hm->buckets[i];
+        while (entry){
+            fn(entry->key, entry->value, user_data);
+            entry = entry->next;
+        }
+    }
+    return DS_OK;
+}
+
 ds_err_t hm_remove(hashmap_s *hm, void *key){
     size_t index = hash(key, hm->key_size, hm->bucket_count);
 

@@ -124,6 +124,17 @@ ds_err_t vector_get(const vector_s *vector, size_t index, void *element_out){
     return DS_OK;
 }
 
+ds_err_t vector_foreach(vector_s *vector, vector_foreach_fn fn, void *user_data){
+    if ((vector == NULL) || (fn == NULL)) return DS_ERR_INVALID_ARGUMENT;
+
+    for (size_t i = 0; i < vector->size; i++){
+        char *base = (char *)vector->data;
+        char *element = base + i * vector->elem_size;
+        fn(element, i, user_data);
+    }
+    return DS_OK;
+}
+
 // Removing an element at a certain index
 ds_err_t vector_remove(vector_s *vector, size_t index){
     if (index >= vector->size) return DS_ERR_OUT_OF_BOUNDS;

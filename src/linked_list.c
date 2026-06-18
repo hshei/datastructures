@@ -168,6 +168,19 @@ ds_err_t llist_insert(linked_list_s *llist, void *element, size_t index){
     return DS_OK;
 }
 
+ds_err_t llist_foreach(linked_list_s *llist, llist_foreach_fn fn, void *user_data){
+    if ((llist == NULL) || (fn == NULL)) return DS_ERR_INVALID_ARGUMENT;
+
+    node_s *current = llist->head;
+    size_t index = 0;
+    while (current){
+        fn(current->data, index, user_data);
+        current = current->next;
+        index++;
+    }
+    return DS_OK;
+}
+
 ds_err_t llist_remove(linked_list_s *llist, size_t index){
     if (index >= llist->size) return DS_ERR_OUT_OF_BOUNDS;
 

@@ -501,6 +501,95 @@ static void test_large_volume(void) {
     PASS();
 }
 
+/* ── Foreach ────────────────────────────── */
+
+static void vec_sum_callback(const void *element, size_t index, void *user_data) {
+    (void)index;
+    int *sum = user_data;
+    *sum += *(const int *)element;
+}
+
+static int vec_call_count = 0;
+static void vec_count_callback(const void *element, size_t index, void *user_data) {
+    (void)element; (void)index; (void)user_data;
+    vec_call_count++;
+}
+
+static void test_vector_foreach_basic(void) {
+    TEST("foreach: visits all elements, sum matches");
+    vector_s *vec = NULL;
+    vector_init(&vec, sizeof(int));
+    int expected = 0;
+    for (int i = 1; i <= 10; i++) {
+        vector_push(vec, &i);
+        expected += i;
+    }
+    int sum = 0;
+    CHECK(vector_foreach(vec, vec_sum_callback, &sum) == DS_OK, "foreach failed");
+    CHECK(sum == expected, "sum mismatch");
+    vector_free(vec);
+    PASS();
+}
+
+static void test_vector_foreach_empty(void) {
+    TEST("foreach: empty vector, callback never called");
+    vector_s *vec = NULL;
+    vector_init(&vec, sizeof(int));
+    vec_call_count = 0;
+    CHECK(vector_foreach(vec, vec_count_callback, NULL) == DS_OK, "foreach failed");
+    CHECK(vec_call_count == 0, "callback called on empty vec");
+    vector_free(vec);
+    PASS();
+}
+
+static int order_expected = 0;
+static int order_correct = 1;
+static void vec_order_callback(const void *element, size_t index, void *user_data) {
+    (void)user_data;
+    if (*(const int *)element != order_expected || (int)index != order_expected)
+        order_correct = 0;
+    order_expected++;
+}
+
+static void test_vector_foreach_order(void) {
+    TEST("foreach: visits elements in index order");
+    vector_s *vec = NULL;
+    vector_init(&vec, sizeof(int));
+    for (int i = 0; i < 5; i++)
+        vector_push(vec, &i);
+    order_expected = 0;
+    order_correct = 1;
+    vector_foreach(vec, vec_order_callback, NULL);
+    CHECK(order_correct == 1, "elements visited out of order");
+    vector_free(vec);
+    PASS();
+}
+
+
+static void test_vector_foreach_count(void) {
+    TEST("foreach: callback called exactly size times");
+    vector_s *vec = NULL;
+    vector_init(&vec, sizeof(int));
+    for (int i = 0; i < 100; i++)
+        vector_push(vec, &i);
+    vec_call_count = 0;
+    vector_foreach(vec, vec_count_callback, NULL);
+    CHECK(vec_call_count == 100, "call count != size");
+    vector_free(vec);
+    PASS();
+}
+
+static void test_vector_foreach_null_args(void) {
+    TEST("foreach: NULL args return error");
+    vector_s *vec = NULL;
+    vector_init(&vec, sizeof(int));
+    CHECK(vector_foreach(NULL, vec_count_callback, NULL) == DS_ERR_INVALID_ARGUMENT, "NULL vec not caught");
+    CHECK(vector_foreach(vec, NULL, NULL) == DS_ERR_INVALID_ARGUMENT, "NULL fn not caught");
+    vector_free(vec);
+    PASS();
+}
+
+
 static void test_single_element_all_ops(void) {
     TEST("edge: single-element vector survives get/set/pop/remove");
     vector_s *v = NULL;
@@ -638,6 +727,13 @@ int main(void) {
     test_insert_into_empty();
     test_repeated_insert_remove_front();
     test_person_data_integrity_after_realloc();
+
+    printf("\n[ Foreach ]\n");
+    test_vector_foreach_basic();
+    test_vector_foreach_empty();
+    test_vector_foreach_order();
+    test_vector_foreach_count();
+    test_vector_foreach_null_args();
 
     printf("\n═══════════════════════════════════════════\n");
     printf("Results: %d / %d passed\n\n", tests_passed, tests_run);

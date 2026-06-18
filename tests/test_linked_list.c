@@ -593,6 +593,94 @@ static void test_pop_front_back_alternating(void) {
     PASS();
 }
 
+/* ── Foreach ────────────────────────────── */
+
+static void ll_sum_callback(const void *element, size_t index, void *user_data) {
+    (void)index;
+    int *sum = user_data;
+    *sum += *(const int *)element;
+}
+
+static int ll_call_count = 0;
+static void ll_count_callback(const void *element, size_t index, void *user_data) {
+    (void)element; (void)index; (void)user_data;
+    ll_call_count++;
+}
+
+static int ll_order_expected = 0;
+static int ll_order_correct = 1;
+static void ll_order_callback(const void *element, size_t index, void *user_data) {
+    (void)user_data;
+    if (*(const int *)element != ll_order_expected || (int)index != ll_order_expected)
+        ll_order_correct = 0;
+    ll_order_expected++;
+}
+
+static void test_llist_foreach_basic(void) {
+    TEST("foreach: visits all elements, sum matches");
+    linked_list_s *list = NULL;
+    llist_init(&list, sizeof(int));
+    int expected = 0;
+    for (int i = 1; i <= 10; i++) {
+        llist_push_back(list, &i);
+        expected += i;
+    }
+    int sum = 0;
+    CHECK(llist_foreach(list, ll_sum_callback, &sum) == DS_OK, "foreach failed");
+    CHECK(sum == expected, "sum mismatch");
+    llist_free(list);
+    PASS();
+}
+
+static void test_llist_foreach_empty(void) {
+    TEST("foreach: empty list, callback never called");
+    linked_list_s *list = NULL;
+    llist_init(&list, sizeof(int));
+    ll_call_count = 0;
+    CHECK(llist_foreach(list, ll_count_callback, NULL) == DS_OK, "foreach failed");
+    CHECK(ll_call_count == 0, "callback called on empty list");
+    llist_free(list);
+    PASS();
+}
+
+static void test_llist_foreach_order(void) {
+    TEST("foreach: visits elements head to tail");
+    linked_list_s *list = NULL;
+    llist_init(&list, sizeof(int));
+    for (int i = 0; i < 5; i++)
+        llist_push_back(list, &i);
+    ll_order_expected = 0;
+    ll_order_correct = 1;
+    llist_foreach(list, ll_order_callback, NULL);
+    CHECK(ll_order_correct == 1, "elements visited out of order");
+    llist_free(list);
+    PASS();
+}
+
+static void test_llist_foreach_count(void) {
+    TEST("foreach: callback called exactly size times");
+    linked_list_s *list = NULL;
+    llist_init(&list, sizeof(int));
+    for (int i = 0; i < 50; i++)
+        llist_push_back(list, &i);
+    ll_call_count = 0;
+    llist_foreach(list, ll_count_callback, NULL);
+    CHECK(ll_call_count == 50, "call count != size");
+    llist_free(list);
+    PASS();
+}
+
+static void test_llist_foreach_null_args(void) {
+    TEST("foreach: NULL args return error");
+    linked_list_s *list = NULL;
+    llist_init(&list, sizeof(int));
+    CHECK(llist_foreach(NULL, ll_count_callback, NULL) == DS_ERR_INVALID_ARGUMENT, "NULL list not caught");
+    CHECK(llist_foreach(list, NULL, NULL) == DS_ERR_INVALID_ARGUMENT, "NULL fn not caught");
+    llist_free(list);
+    PASS();
+}
+
+
 /* ═══════════════════════════════════════════
    MAIN
 ═══════════════════════════════════════════ */
@@ -659,6 +747,13 @@ int main(void) {
     test_repeated_insert_remove_front();
     test_person_data_integrity();
     test_pop_front_back_alternating();
+
+    printf("\n[ Foreach ]\n");
+    test_llist_foreach_basic();
+    test_llist_foreach_empty();
+    test_llist_foreach_order();
+    test_llist_foreach_count();
+    test_llist_foreach_null_args();
 
     printf("\n═══════════════════════════════════════════\n");
     printf("Results: %d / %d passed\n\n", tests_passed, tests_run);
