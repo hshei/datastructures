@@ -113,7 +113,7 @@ A **hash table** for fast key-value lookups. Store and retrieve values by key in
 - `hm_foreach()` — Apply a function to each key-value pair
 - `hm_free()` — Free all memory
 
-HashSet ￼
+## HashSet ￼
 
 A hash set for fast membership checks. Store unique keys with O(1) average insert, lookup, and remove.
 
