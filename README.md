@@ -2,6 +2,10 @@
 
 A type-independent data structures library using `void *` and `memcpy`. Store any data type in the same container — ints, structs, pointers. No macros, no code generation.
 
+## Used In
+
+- [chatserver](https://github.com/hshei/chatserver) — multi-client chat server using hashmap for client tracking and connection management
+
 ## Quick Start
 
 ```bash
