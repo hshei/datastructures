@@ -22,6 +22,14 @@ gcc your_program.c datastructures/src/*.c -I datastructures/include -o your_prog
 
 All functions return `ds_err_t`. Use `ds_err_str(err)` for readable error messages.
 
+## Tests
+
+```bash
+make test
+```
+
+Runs unit tests for all data structures — covers insertion, removal, iteration, edge cases, and error handling.
+
 ## API
 
 ### Vector — dynamic array, O(1) random access
@@ -159,7 +167,7 @@ pop x100k (draining)     0.090 ms
 
 ### Linked List
 
-```
+``` txt
 push_back x100k          5.288 ms
 push_front x10k          0.477 ms
 sequential get x1k       1.100 ms
@@ -169,7 +177,7 @@ pop_front x100k          1.813 ms
 
 ### Vector vs Linked List
 
-```
+``` txt
 Operation                   Vector     Linked List
 push_back x100k            0.319ms       1.914ms
 sequential get x1k         0.003ms       0.140ms
@@ -179,7 +187,7 @@ pop_front x10k             1.923ms       0.151ms
 
 ### HashMap
 
-```
+``` txt
 insert x100k               5.350 ms
 get x100k                  1.243 ms
 remove x100k               2.785 ms
@@ -187,7 +195,7 @@ remove x100k               2.785 ms
 
 ### HashSet
 
-```
+``` txt
 insert x100k               3.401 ms
 contains (hit) x100k       1.024 ms
 contains (miss) x100k      0.615 ms
