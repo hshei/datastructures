@@ -9,7 +9,7 @@ SRCS = src/vector.c src/error.c src/linked_list.c src/hashmap.c src/hashset.c
 OBJS = $(BUILD)/vector.o $(BUILD)/error.o $(BUILD)/linked_list.o $(BUILD)/hashmap.o $(BUILD)/hashset.o
 TESTS = $(BUILD)/vector_test $(BUILD)/linked_list_test $(BUILD)/hashmap_test $(BUILD)/hashset_test $(BUILD)/benchmark
 
-all: $(BUILD) $(LIB) $(TESTS)
+all: $(BUILD) $(LIB) 
 
 $(BUILD):
 	mkdir -p $(BUILD)
@@ -46,6 +46,15 @@ $(BUILD)/hashset_test: tests/test_hashset.c $(LIB) include/datastructures.h
 
 $(BUILD)/benchmark: tests/benchmark.c $(LIB) include/datastructures.h
 	$(CC) $(CFLAGS) tests/benchmark.c -L$(BUILD) -ldatastructures -o $(BUILD)/benchmark
+
+test: $(BUILD) $(LIB) $(TESTS)
+	$(BUILD)/vector_test
+	$(BUILD)/linked_list_test
+	$(BUILD)/hashmap_test
+	$(BUILD)/hashset_test
+
+benchmark: $(BUILD) $(LIB) $(BUILD)/benchmark
+	$(BUILD)/benchmark
 
 .PHONY: all clean
 

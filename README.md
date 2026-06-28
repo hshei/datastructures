@@ -30,6 +30,12 @@ make test
 
 Runs unit tests for all data structures — covers insertion, removal, iteration, edge cases, and error handling.
 
+```bash
+make benchmark
+```
+
+Runs performance benchmarks.
+
 ## API
 
 ### Vector — dynamic array, O(1) random access
