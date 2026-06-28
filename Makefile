@@ -1,5 +1,5 @@
 CC = cc
-CFLAGS = -Wall -Wextra -std=c11 -O2 -Iinclude
+CFLAGS = -Wall -Wextra -std=c11 -O2 -Iinclude -fsanitize=address
 AR = ar
 ARFLAGS = rcs
 

@@ -36,6 +36,8 @@ make benchmark
 
 Runs performance benchmarks.
 
+All tests pass clean under AddressSanitizer (no leaks, no buffer overflows).
+
 ## API
 
 ### Vector — dynamic array, O(1) random access
