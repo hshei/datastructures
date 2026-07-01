@@ -1,4 +1,5 @@
 # Generic Data Structures Library in C
+![build](https://github.com/hshei/datastructures/actions/workflows/build.yml/badge.svg)
 
 A type-independent data structures library using `void *` and `memcpy`. Store any data type in the same container — ints, structs, pointers. No macros, no code generation.
 
