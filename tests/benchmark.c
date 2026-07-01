@@ -9,6 +9,8 @@
 #include <time.h>
 #include <stdbool.h>
 
+#define _POSIX_C_SOURCE 199309L
+
 /* ─────────────────────────────────────────────
    Timer helpers
 ───────────────────────────────────────────── */
