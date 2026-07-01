@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 199309L
+
 #include "vector.h"
 #include "linked_list.h"
 #include "hashmap.h"
@@ -9,7 +11,6 @@
 #include <time.h>
 #include <stdbool.h>
 
-#define _POSIX_C_SOURCE 199309L
 
 /* ─────────────────────────────────────────────
    Timer helpers
